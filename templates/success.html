@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Pedido Confirmado - Funerária Montserrat{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="success-icon mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <h2 class="text-success mb-3">Pedido Confirmado!</h2>
+                    <p class="lead mb-4">
+                        Obrigado, {{ order.customer_name }}! Seu pedido foi processado com sucesso.
+                    </p>
+                    
+                    <div class="order-details mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-card">
+                                    <h6 class="text-muted">Número do Pedido</h6>
+                                    <p class="fw-bold">#{{ order.id }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-card">
+                                    <h6 class="text-muted">Status</h6>
+                                    <p class="text-success fw-bold">
+                                        <i class="fas fa-check me-2"></i>Confirmado
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Próximos passos:</strong> 
+                        Entraremos em contato para confirmar os detalhes da entrega e coordenar os arranjos necessários.
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <a href="https://api.whatsapp.com/send?phone=5551983339080&text=Olá,%20gostaria%20de%20acompanhar%20meu%20pedido!" 
+                           class="btn btn-success btn-lg me-3" target="_blank">
+                            <i class="fab fa-whatsapp me-2"></i>
+                            Acompanhar no WhatsApp
+                        </a>
+                        
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Voltar ao Início
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Receipt Section -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt me-2"></i>
+                        Comprovante de Pagamento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Seu comprovante foi gerado automaticamente. Para futuras referências, 
+                        guarde o número do pedido: <strong>#{{ order.id }}</strong>
+                    </p>
+                    
+                    <div class="receipt-info">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <small class="text-muted">Data do Pedido:</small>
+                                <p class="mb-2">{{ moment().format('DD/MM/YYYY HH:mm') }}</p>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted">Método de Pagamento:</small>
+                                <p class="mb-2">Processado com sucesso</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-redirect to WhatsApp after 5 seconds
+setTimeout(function() {
+    const whatsappLink = document.querySelector('a[href*="whatsapp"]');
+    if (whatsappLink) {
+        // Show countdown
+        const countdownElement = document.createElement('div');
+        countdownElement.className = 'alert alert-info mt-3';
+        countdownElement.innerHTML = '<i class="fas fa-clock me-2"></i>Redirecionando para WhatsApp em <span id="countdown">5</span> segundos...';
+        
+        const actionButtons = document.querySelector('.action-buttons');
+        actionButtons.parentNode.insertBefore(countdownElement, actionButtons.nextSibling);
+        
+        let seconds = 5;
+        const interval = setInterval(function() {
+            seconds--;
+            document.getElementById('countdown').textContent = seconds;
+            
+            if (seconds === 0) {
+                clearInterval(interval);
+                window.open(whatsappLink.href, '_blank');
+            }
+        }, 1000);
+    }
+}, 1000);
+</script>
+{% endblock %}
