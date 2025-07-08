@@ -1,13 +1,17 @@
-/* Custom CSS for Funerária Montserrat */
+/* Custom CSS - Minimalist Blue & White Theme */
 :root {
-    --primary-color: #6c63ff;
+    --primary-color: #0d6efd;
+    /* Azul primário do Bootstrap */
+    --primary-color-light: #e0f2f7;
+    /* Tom de azul claro para fundos */
     --secondary-color: #f8f9fa;
-    --text-color: #333;
+    /* Cinza muito claro */
+    --text-color: #212529;
+    /* Preto suave */
     --text-muted: #6c757d;
     --border-color: #dee2e6;
-    --success-color: #28a745;
-    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --white-color: #ffffff;
+    --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
 * {
@@ -20,319 +24,85 @@ body {
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
     color: var(--text-color);
-    background-color: #fafafa;
+    background-color: var(--secondary-color);
+    /* Fundo geral cinza claro */
 }
 
-/* Hero Section */
-.hero-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    margin-bottom: 2rem;
-}
-
-.hero-section h1 {
-    font-weight: 700;
-    margin-bottom: 1rem;
-}
-
-.hero-section .lead {
-    font-size: 1.1rem;
-    opacity: 0.9;
-}
-
-.hero-section img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 12px;
-}
-
-/* Crown Cards */
-.crown-card {
-    border: none;
-    border-radius: 12px;
-    overflow: hidden;
-    transition: all 0.3s ease;
+/* --- Navegação --- */
+.navbar {
     box-shadow: var(--shadow);
 }
 
-.crown-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-hover);
-}
-
-.card-img-container {
-    position: relative;
-    overflow: hidden;
-}
-
-.crown-card img {
-    width: 100%;
-    height: 250px;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.crown-card:hover img {
-    transform: scale(1.05);
-}
-
-.price-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(255, 255, 255, 0.95);
+.navbar-brand .fa-leaf {
     color: var(--primary-color);
-    padding: 8px 12px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.crown-card .card-body {
-    padding: 1.5rem;
+/* --- Cartões e Painéis --- */
+.card {
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow);
 }
 
-.crown-card .card-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 0.5rem;
-}
-
-.crown-card .card-text {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-.btn-customize {
-    background: var(--primary-color);
-    border: none;
-    border-radius: 8px;
-    padding: 12px 20px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.btn-customize:hover {
-    background: #5a52d5;
-    transform: translateY(-2px);
-}
-
-/* Modal Styles */
-.modal-content {
-    border-radius: 12px;
-    border: none;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.modal-header {
-    background: var(--primary-color);
-    color: white;
-    border-radius: 12px 12px 0 0;
-}
-
-.preview-container {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-}
-
-#previewCanvas {
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    max-width: 100%;
-    height: auto;
-}
-
-.selected-crown-info {
-    background: var(--secondary-color);
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 15px;
-}
-
-/* Checkout Styles */
-.order-summary {
-    background: var(--secondary-color);
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.payment-options .form-check {
-    padding: 15px;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    margin-bottom: 10px;
-    transition: all 0.3s ease;
-}
-
-.payment-options .form-check:hover {
-    border-color: var(--primary-color);
-    background: rgba(108, 99, 255, 0.05);
-}
-
-.payment-options .form-check-input:checked + .form-check-label {
-    color: var(--primary-color);
+.card-header {
+    background-color: var(--white-color);
+    border-bottom: 1px solid var(--border-color);
     font-weight: 500;
 }
 
-#installmentsSection {
-    background: var(--secondary-color);
-    padding: 20px;
-    border-radius: 8px;
-    margin-top: 15px;
-}
-
-/* Success Page */
-.success-icon {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-
-.info-card {
-    background: var(--secondary-color);
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-
-.info-card h6 {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.info-card p {
-    font-size: 1.1rem;
-    margin-bottom: 0;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .hero-section {
-        text-align: center;
-    }
-    
-    .hero-section h1 {
-        font-size: 2rem;
-    }
-    
-    .crown-card img {
-        height: 200px;
-    }
-    
-    .modal-dialog {
-        margin: 10px;
-    }
-    
-    .preview-container {
-        margin-bottom: 20px;
-    }
-    
-    #previewCanvas {
-        width: 100%;
-        height: auto;
-    }
-}
-
-/* Utility Classes */
-.text-primary {
-    color: var(--primary-color) !important;
-}
-
-.bg-primary {
-    background-color: var(--primary-color) !important;
-}
-
+/* --- Botões --- */
 .btn-primary {
     background-color: var(--primary-color);
     border-color: var(--primary-color);
 }
 
 .btn-primary:hover {
-    background-color: #5a52d5;
-    border-color: #5a52d5;
+    opacity: 0.9;
 }
 
-.border-primary {
-    border-color: var(--primary-color) !important;
+/* --- Página Principal (index.html) --- */
+.hero-section {
+    background-color: var(--white-color);
+    padding: 4rem 0;
 }
 
-/* Animations */
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
+.crown-card {
+    background-color: var(--white-color);
+    transition: transform 0.2s ease-in-out;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+.crown-card:hover {
+    transform: translateY(-5px);
 }
 
-/* Loading States */
-.loading {
-    opacity: 0.7;
-    pointer-events: none;
+.price-badge {
+    background: var(--primary-color-light);
+    color: var(--primary-color);
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: 600;
 }
 
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid var(--primary-color);
-    border-radius: 50%;
-    border-top-color: transparent;
-    animation: spin 1s linear infinite;
+
+/* --- Página de Sucesso --- */
+.success-icon .fa-check-circle {
+    font-size: 4rem;
+    color: #198754;
+    /* Verde para sucesso */
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+/* --- Rodapé --- */
+footer {
+    background-color: var(--white-color);
+    border-top: 1px solid var(--border-color);
+    padding: 2rem 0;
 }
 
-/* Accessibility */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+/* --- Utilitários --- */
+.text-primary {
+    color: var(--primary-color) !important;
 }
 
-/* Focus States */
-.form-control:focus,
-.form-select:focus,
-.btn:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.25);
-}
-
-/* Print Styles */
-@media print {
-    .navbar,
-    .btn,
-    .modal {
-        display: none !important;
-    }
-    
-    .container {
-        width: 100% !important;
-        max-width: none !important;
-    }
+.bg-primary {
+    background-color: var(--primary-color) !important;
 }
