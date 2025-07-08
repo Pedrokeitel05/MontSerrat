@@ -104,6 +104,50 @@ document.addEventListener('DOMContentLoaded', function() {
             navbarCollapse.classList.toggle('show');
         });
     }
+
+    // Theme Toggle Functionality
+    const themeToggle = document.getElementById('themeToggle');
+    
+    if (themeToggle) {
+        const body = document.body;
+        const icon = themeToggle.querySelector('i');
+        
+        // Load saved theme or default to dark
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        body.setAttribute('data-theme', savedTheme);
+        updateIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+            
+            // Add a small animation feedback
+            themeToggle.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                themeToggle.style.transform = 'scale(1)';
+            }, 150);
+            
+            console.log('Theme changed to:', newTheme);
+        });
+        
+        function updateIcon(theme) {
+            if (theme === 'light') {
+                icon.className = 'fas fa-moon';
+                themeToggle.title = 'Alternar para tema escuro';
+            } else {
+                icon.className = 'fas fa-sun';
+                themeToggle.title = 'Alternar para tema claro';
+            }
+        }
+        
+        console.log('Theme toggle initialized with theme:', savedTheme);
+    } else {
+        console.error('Theme toggle button not found');
+    }
 });
 
 // Utility functions
