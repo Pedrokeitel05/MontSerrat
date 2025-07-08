@@ -1,57 +1,60 @@
-{% extends "base.html" %} {% block title %}Login - Painel Administrativo{%
-endblock %} {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-5">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-lock me-2"></i>
-                        Acesso Restrito
-                    </h4>
-                </div>
-                <div class="card-body p-4">
-                    <form method="POST" action="{{ url_for('login') }}">
-                        <div class="mb-3">
-                            <label for="username" class="form-label"
-                                >Nome de Utilizador</label
-                            >
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="username"
-                                name="username"
-                                required
-                            />
-                        </div>
-                        <div class="mb-4">
-                            <label for="password" class="form-label"
-                                >Palavra-passe</label
-                            >
-                            <input
-                                type="password"
-                                class="form-control"
-                                id="password"
-                                name="password"
-                                required
-                            />
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                Entrar
-                            </button>
-                        </div>
-                    </form>
+{% extends "base.html" %} {% block title %}Login - Painel Administrativo{% endblock %} 
+
+{% block content %}
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--gradient-dark);">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5">
+                <div class="modal-content" style="position: relative; display: block; margin: 0;">
+                    <div class="modal-header">
+                        <h4 class="modal-title w-100 text-center">
+                            <i class="fas fa-lock me-2"></i>
+                            Acesso Restrito
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{{ url_for('login') }}">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Nome de Utilizador</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="username"
+                                    name="username"
+                                    placeholder="Digite seu nome de usuário"
+                                    required
+                                />
+                            </div>
+                            <div class="mb-4">
+                                <label for="password" class="form-label">Palavra-passe</label>
+                                <input
+                                    type="password"
+                                    class="form-control"
+                                    id="password"
+                                    name="password"
+                                    placeholder="Digite sua senha"
+                                    required
+                                />
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-gradient">
+                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                    Entrar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <p class="text-center w-100 small mb-0">
+                            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Voltar ao site
+                            </a>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %} {% block scripts %}
-<style>
-    /* Esconder o rodapé padrão na página de login */
-    footer {
-        display: none;
-    }
-</style>
 {% endblock %}

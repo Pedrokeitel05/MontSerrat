@@ -88,7 +88,15 @@ This is a Flask-based web application for a funeral home's flower crown ordering
 
 ## Changelog
 - July 07, 2025. Initial setup
+- July 08, 2025. Complete layout redesign - modern dark theme with minimalist approach
+  - Implemented dark color scheme with purple accent (#6366f1)
+  - Updated all templates with modern card-based layouts
+  - Enhanced animations and hover effects
+  - Improved mobile responsiveness
+  - Updated admin panel with statistics dashboard
+  - Redesigned login page with centered modal layout
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Design preference: Modern, minimalist, dark theme instead of white background.

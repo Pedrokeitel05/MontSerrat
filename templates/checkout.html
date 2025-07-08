@@ -3,45 +3,34 @@
 {% block title %}Finalizar Pedido - Funerária Montserrat{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-shopping-cart me-2"></i>
-                        Finalizar Pedido
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <!-- Order Summary -->
-                    <div class="order-summary mb-4">
-                        <h5 class="mb-3">Resumo do Pedido</h5>
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h6>{{ cart.crown_name }}</h6>
-                                {% if cart.custom_message %}
-                                <p class="text-muted mb-2">
-                                    <strong>Mensagem:</strong> "{{ cart.custom_message }}"
-                                </p>
-                                {% endif %}
-                                <p class="text-muted mb-0">
-                                    <strong>Preço base:</strong> R$ {{ "%.2f"|format(cart.crown_price) }}
-                                </p>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <h5 class="text-primary" id="totalAmount">
-                                    R$ {{ "%.2f"|format(cart.crown_price) }}
-                                </h5>
-                            </div>
-                        </div>
-                    </div>
+<div class="checkout-container">
+    <div class="checkout-header">
+        <h1>Finalizar Pedido</h1>
+        <p class="lead">Complete as informações para finalizar sua compra</p>
+    </div>
+    
+    <div class="order-summary">
+        <h4><i class="fas fa-shopping-cart me-2"></i>Resumo do Pedido</h4>
+        <div class="crown-preview">
+            <div class="crown-details">
+                <h6>{{ cart.crown_name }}</h6>
+                {% if cart.custom_message %}
+                <p><strong>Mensagem:</strong> "{{ cart.custom_message }}"</p>
+                {% endif %}
+                <p class="mb-0"><strong>Preço base:</strong> R$ {{ "%.2f"|format(cart.crown_price) }}</p>
+            </div>
+        </div>
+        <div class="price-breakdown">
+            <div class="price-row total">
+                <span>Total:</span>
+                <span id="totalAmount">R$ {{ "%.2f"|format(cart.crown_price) }}</span>
+            </div>
+        </div>
+    </div>
 
-                    <hr>
-
-                    <!-- Customer Information Form -->
-                    <form id="checkoutForm" method="POST" action="{{ url_for('create_checkout_session') }}">
-                        <h5 class="mb-3">Informações do Cliente</h5>
+    <div class="payment-section">
+        <form id="checkoutForm" method="POST" action="{{ url_for('create_checkout_session') }}">
+            <h5 class="mb-4">Informações do Cliente</h5>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="customerName" class="form-label">Nome Completo *</label>
@@ -57,79 +46,76 @@
                             <input type="email" class="form-control" id="customerEmail" name="customer_email" required>
                         </div>
 
-                        <h5 class="mb-3">Forma de Pagamento</h5>
-                        <div class="payment-options">
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="radio" name="payment_method" id="pix" value="pix" checked>
-                                <label class="form-check-label" for="pix">
-                                    <i class="fas fa-qrcode me-2 text-primary"></i>
-                                    PIX (Pagamento instantâneo)
-                                </label>
-                            </div>
-                            
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="radio" name="payment_method" id="debit" value="debit">
-                                <label class="form-check-label" for="debit">
-                                    <i class="fas fa-credit-card me-2 text-primary"></i>
-                                    Cartão de Débito
-                                </label>
-                            </div>
-                            
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="radio" name="payment_method" id="credit" value="credit">
-                                <label class="form-check-label" for="credit">
-                                    <i class="fas fa-credit-card me-2 text-primary"></i>
-                                    Cartão de Crédito à vista
-                                </label>
-                            </div>
-                            
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="radio" name="payment_method" id="creditInstallments" value="credit_installments">
-                                <label class="form-check-label" for="creditInstallments">
-                                    <i class="fas fa-calendar-alt me-2 text-primary"></i>
-                                    Cartão de Crédito parcelado
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Installments Section -->
-                        <div id="installmentsSection" class="mb-4" style="display: none;">
-                            <label for="installments" class="form-label">Número de Parcelas</label>
-                            <select class="form-select" id="installments" name="installments">
-                                <option value="1">1x sem juros</option>
-                                <option value="2">2x (1,5% ao mês)</option>
-                                <option value="3">3x (1,5% ao mês)</option>
-                                <option value="4">4x (1,5% ao mês)</option>
-                                <option value="5">5x (1,5% ao mês)</option>
-                                <option value="6">6x (1,5% ao mês)</option>
-                                <option value="7">7x (1,5% ao mês)</option>
-                                <option value="8">8x (1,5% ao mês)</option>
-                                <option value="9">9x (1,5% ao mês)</option>
-                                <option value="10">10x (1,5% ao mês)</option>
-                                <option value="11">11x (1,5% ao mês)</option>
-                                <option value="12">12x (1,5% ao mês)</option>
-                            </select>
-                            <div class="form-text">
-                                <small class="text-muted">
-                                    Valor da parcela: <span id="monthlyPayment">R$ 0,00</span>
-                                </small>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-lock me-2"></i>
-                                Finalizar Pagamento
-                            </button>
-                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>
-                                Voltar para Seleção
-                            </a>
-                        </div>
-                    </form>
+            <h5 class="mb-4">Forma de Pagamento</h5>
+            <div class="payment-options">
+                <div class="payment-method" onclick="selectPayment('pix')">
+                    <input type="radio" name="payment_method" id="pix" value="pix" checked>
+                    <label for="pix">
+                        <i class="fas fa-qrcode me-2"></i>
+                        PIX (Pagamento instantâneo)
+                    </label>
+                </div>
+                
+                <div class="payment-method" onclick="selectPayment('debit')">
+                    <input type="radio" name="payment_method" id="debit" value="debit">
+                    <label for="debit">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Cartão de Débito
+                    </label>
+                </div>
+                
+                <div class="payment-method" onclick="selectPayment('credit')">
+                    <input type="radio" name="payment_method" id="credit" value="credit">
+                    <label for="credit">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Cartão de Crédito à vista
+                    </label>
+                </div>
+                
+                <div class="payment-method" onclick="selectPayment('creditInstallments')">
+                    <input type="radio" name="payment_method" id="creditInstallments" value="credit_installments">
+                    <label for="creditInstallments">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Cartão de Crédito parcelado
+                    </label>
                 </div>
             </div>
-        </div>
+
+            <!-- Installments Section -->
+            <div id="installmentsSection" class="installment-info" style="display: none;">
+                <label for="installments" class="form-label">Número de Parcelas</label>
+                <select class="form-control" id="installments" name="installments">
+                    <option value="1">1x sem juros</option>
+                    <option value="2">2x (1,5% ao mês)</option>
+                    <option value="3">3x (1,5% ao mês)</option>
+                    <option value="4">4x (1,5% ao mês)</option>
+                    <option value="5">5x (1,5% ao mês)</option>
+                    <option value="6">6x (1,5% ao mês)</option>
+                    <option value="7">7x (1,5% ao mês)</option>
+                    <option value="8">8x (1,5% ao mês)</option>
+                    <option value="9">9x (1,5% ao mês)</option>
+                    <option value="10">10x (1,5% ao mês)</option>
+                    <option value="11">11x (1,5% ao mês)</option>
+                    <option value="12">12x (1,5% ao mês)</option>
+                </select>
+                <div class="form-text">
+                    <small>
+                        Valor da parcela: <span id="monthlyPayment">R$ 0,00</span>
+                    </small>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-gradient btn-lg">
+                    <i class="fas fa-lock me-2"></i>
+                    Finalizar Pagamento
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Voltar para Seleção
+                </a>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
@@ -148,6 +134,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle payment method changes
     paymentMethods.forEach(method => {
         method.addEventListener('change', function() {
+            // Update active payment method
+            document.querySelectorAll('.payment-method').forEach(pm => pm.classList.remove('active'));
+            this.closest('.payment-method').classList.add('active');
+            
             if (this.value === 'credit_installments') {
                 installmentsSection.style.display = 'block';
                 updateInstallmentCalculation();
@@ -187,6 +177,14 @@ document.addEventListener('DOMContentLoaded', function() {
         value = value.replace(/(\d{5})(\d)/, '$1-$2');
         e.target.value = value;
     });
+    
+    // Set initial active payment method
+    document.getElementById('pix').closest('.payment-method').classList.add('active');
 });
+
+function selectPayment(paymentType) {
+    document.getElementById(paymentType).checked = true;
+    document.getElementById(paymentType).dispatchEvent(new Event('change'));
+}
 </script>
 {% endblock %}
