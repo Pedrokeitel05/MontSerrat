@@ -23,6 +23,24 @@
     --gradient-dark: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
 }
 
+/* Light Theme Variables */
+[data-theme="light"] {
+    --primary-color: #f8f9fa;
+    --secondary-color: #e9ecef;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --gradient-dark: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -55,6 +73,15 @@ body {
     background: var(--accent-color);
 }
 
+/* Light theme scrollbar adjustments */
+[data-theme="light"] ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+}
+
 /* Navigation */
 .navbar {
     background: rgba(15, 15, 15, 0.95) !important;
@@ -81,6 +108,84 @@ body {
 
 .navbar-text {
     color: var(--text-muted) !important;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--accent-color);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+/* Theme transition */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Light theme shadow adjustments */
+[data-theme="light"] {
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Light theme specific adjustments */
+[data-theme="light"] .navbar {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+}
+
+[data-theme="light"] .hero-section::before {
+    background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+}
+
+[data-theme="light"] .crown-card:hover {
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.1);
+}
+
+[data-theme="light"] .btn-customize:hover {
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="light"] .btn-gradient:hover {
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="light"] .whatsapp-button:hover {
+    box-shadow: 0 8px 20px rgba(37, 211, 102, 0.2);
+}
+
+[data-theme="light"] .download-receipt:hover {
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="light"] .stat-card:hover {
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.1);
+}
+
+[data-theme="light"] .theme-toggle-btn:hover {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
 /* Hero Section */

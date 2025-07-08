@@ -95,6 +95,9 @@ This is a Flask-based web application for a funeral home's flower crown ordering
   - Improved mobile responsiveness
   - Updated admin panel with statistics dashboard
   - Redesigned login page with centered modal layout
+  - Added theme toggle button in navigation for dark/light mode switching
+  - Implemented smooth theme transitions with CSS variables
+  - Added localStorage persistence for theme preference
 
 ## User Preferences
 
