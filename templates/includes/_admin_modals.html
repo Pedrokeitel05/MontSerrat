@@ -1,0 +1,211 @@
+<div class="modal fade" id="addCrownModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form
+                id="addCrownForm"
+                action="{{ url_for('add_crown') }}"
+                method="POST"
+            >
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Nova Coroa</h5>
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <input
+                        type="hidden"
+                        name="image_url"
+                        id="hiddenImageUrlAdd"
+                        required
+                    />
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input
+                            type="text"
+                            name="name"
+                            class="form-control"
+                            required
+                            placeholder="Ex: Coroa de Flores Brancas"
+                        />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descrição</label>
+                        <textarea
+                            name="description"
+                            class="form-control"
+                            rows="1"
+                            required
+                            placeholder="Ex: Composta por lírios, rosas e gérberas..."
+                        ></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Preço</label>
+                        <input
+                            type="text"
+                            name="price"
+                            class="form-control"
+                            required
+                            placeholder="Ex: 460,00"
+                        />
+                    </div>
+                    <div class="mb-3">
+                        <label for="imageFileAdd" class="form-label"
+                            >Imagem da Coroa</label
+                        >
+                        <input
+                            class="form-control"
+                            type="file"
+                            id="imageFileAdd"
+                            accept="image/*"
+                            required
+                        />
+                        <div class="progress mt-2" style="display: none">
+                            <div
+                                class="progress-bar"
+                                role="progressbar"
+                                style="width: 0%"
+                            >
+                                0%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        id="saveAddBtn"
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for crown in crowns %}
+<div class="modal fade" id="editCrownModal-{{ crown.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form
+                id="editCrownForm-{{ crown.id }}"
+                action="{{ url_for('edit_crown', crown_id=crown.id) }}"
+                method="POST"
+            >
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Coroa: {{ crown.name }}</h5>
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <div class="edit-modal-image-col">
+                                <h6>Imagem</h6>
+                                <img
+                                    src="{{ crown.image_url }}"
+                                    alt="Imagem atual"
+                                    class="img-thumbnail mb-3"
+                                />
+                                <label
+                                    for="imageFileEdit-{{ crown.id }}"
+                                    class="form-label"
+                                    >Carregar nova (opcional)</label
+                                >
+                                <input
+                                    class="form-control form-control-sm"
+                                    type="file"
+                                    id="imageFileEdit-{{ crown.id }}"
+                                    accept="image/*"
+                                />
+                                <div
+                                    class="progress mt-2"
+                                    style="display: none"
+                                >
+                                    <div
+                                        class="progress-bar"
+                                        role="progressbar"
+                                        style="width: 0%"
+                                    >
+                                        0%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <input
+                                type="hidden"
+                                name="image_url"
+                                id="hiddenImageUrlEdit-{{ crown.id }}"
+                                value="{{ crown.image_url }}"
+                                required
+                            />
+                            <div class="mb-3">
+                                <label class="form-label">Nome</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    class="form-control"
+                                    value="{{ crown.name }}"
+                                    required
+                                />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Descrição</label>
+                                <textarea
+                                    name="description"
+                                    class="form-control"
+                                    rows="1"
+                                    required
+                                >
+{{ crown.description }}</textarea
+                                >
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Preço</label>
+                                <input
+                                    type="text"
+                                    name="price"
+                                    class="form-control"
+                                    value="{{ 'R$ %.2f'|format(crown.price) }}"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        id="saveEditBtn-{{ crown.id }}"
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}

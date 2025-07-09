@@ -1182,3 +1182,924 @@ footer a:hover {
         transform: none;
     }
 }
+
+/* ================================================= */
+/* ESTILOS PARA AS NOVAS NOTIFICAÇÕES TOAST MODERNAS  */
+/* ================================================= */
+
+/* Remove o estilo antigo para evitar conflitos */
+.toast-container {
+    position: fixed !important;
+    top: auto !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    padding: 1rem !important;
+}
+
+/* Estilo base para a nossa notificação moderna */
+.toast.toast-modern {
+    /* Usa as variáveis de cor do seu tema para um visual integrado */
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    border-radius: 12px;
+    border-left-width: 4px;
+    /* Prepara o espaço para a barra de cor lateral */
+    opacity: 1;
+    min-width: 350px;
+    /* Garante que a notificação tenha uma largura mínima */
+}
+
+/* Estilo do cabeçalho da notificação */
+.toast.toast-modern .toast-header {
+    background-color: transparent;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+}
+
+/* Garante que o botão 'X' de fechar seja visível em ambos os temas (claro/escuro) */
+.toast.toast-modern .toast-header .btn-close {
+    filter: invert(var(--bg-primary)==='#0f0f0f' ? 1 : 0);
+}
+
+/* Estilo do corpo da notificação */
+.toast.toast-modern .toast-body {
+    color: var(--text-secondary);
+    padding: 1rem;
+}
+
+/* Estilo para o ícone */
+.toast.toast-modern .toast-icon i {
+    font-size: 1.1rem;
+}
+
+/* ---- Cores da barra lateral e do ícone baseadas no tipo da mensagem ---- */
+
+/* Sucesso (Verde) */
+.toast.toast-modern.toast-success {
+    border-left-color: var(--success-color);
+}
+
+.toast.toast-modern.toast-success .toast-icon {
+    color: var(--success-color);
+}
+
+/* Erro (Vermelho) */
+.toast.toast-modern.toast-danger {
+    border-left-color: var(--error-color);
+}
+
+.toast.toast-modern.toast-danger .toast-icon {
+    color: var(--error-color);
+}
+
+/* Aviso (Amarelo) */
+.toast.toast-modern.toast-warning {
+    border-left-color: var(--warning-color);
+}
+
+.toast.toast-modern.toast-warning .toast-icon {
+    color: var(--warning-color);
+}
+
+/* Informação (Azul/Roxo do tema) */
+.toast.toast-modern.toast-info {
+    border-left-color: var(--accent-color);
+}
+
+.toast.toast-modern.toast-info .toast-icon {
+    color: var(--accent-color);
+}
+
+/* ================================================= */
+/* ESTILOS PARA A NOVA LISTA DE COROAS (ADMIN)       */
+/* ================================================= */
+
+/* Adicione estas cores RGB à sua secção :root para usar transparência */
+:root {
+    --accent-color-rgb: 99, 102, 241;
+    --bg-secondary-rgb: 31, 31, 31;
+}
+
+[data-theme="light"] {
+    --accent-color-rgb: 99, 102, 241;
+    --bg-secondary-rgb: 248, 249, 250;
+}
+
+/* Container da lista */
+.admin-crown-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* 1 coluna de cartões */
+    gap: 1.5rem;
+}
+
+/* O cartão individual para cada coroa */
+.admin-crown-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+
+    /* Efeito de vidro translúcido */
+    background: rgba(var(--bg-secondary-rgb), 0.5);
+    backdrop-filter: blur(10px);
+
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Efeito Neon no Hover */
+.admin-crown-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(var(--accent-color-rgb), 0.7);
+    box-shadow: 0 8px 30px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.crown-card-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.crown-card-info {
+    flex-grow: 1;
+    /* Faz esta secção ocupar o espaço disponível */
+}
+
+.crown-card-name {
+    font-size: 1.2rem;
+    /* Fonte maior, como pedido */
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.crown-card-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.crown-card-price {
+    font-size: 1.1rem;
+    /* Fonte maior, como pedido */
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Ícones de Ação (sem o fundo do botão) */
+.crown-card-actions {
+    display: flex;
+    gap: 1.2rem;
+    /* Aumenta o espaçamento entre os ícones */
+}
+
+.crown-card-actions .action-icon {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.25rem;
+    /* Ícones maiores */
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+}
+
+.crown-card-actions .action-icon:hover {
+    transform: scale(1.2);
+}
+
+.crown-card-actions .action-icon[title="Editar"]:hover {
+    color: var(--warning-color);
+    /* Amarelo no hover */
+}
+
+.crown-card-actions .action-icon[title="Apagar"]:hover {
+    color: var(--error-color);
+    /* Vermelho no hover */
+}
+
+/* ================================================= */
+/* ESTILOS PARA A NOVA LISTA DE COROAS (ADMIN)       */
+/* ================================================= */
+
+/* Adicione estas cores RGB à sua secção :root para usar transparência */
+:root {
+    --accent-color-rgb: 99, 102, 241;
+    --bg-secondary-rgb: 31, 31, 31;
+}
+
+[data-theme="light"] {
+    --accent-color-rgb: 99, 102, 241;
+    --bg-secondary-rgb: 248, 249, 250;
+}
+
+/* Container da lista */
+.admin-crown-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* 1 coluna de cartões */
+    gap: 1.5rem;
+}
+
+/* O cartão individual para cada coroa */
+.admin-crown-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+
+    /* Efeito de vidro translúcido */
+    background: rgba(var(--bg-secondary-rgb), 0.5);
+    backdrop-filter: blur(10px);
+
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Efeito Neon no Hover */
+.admin-crown-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(var(--accent-color-rgb), 0.7);
+    box-shadow: 0 8px 30px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.crown-card-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.crown-card-info {
+    flex-grow: 1;
+    /* Faz esta secção ocupar o espaço disponível */
+}
+
+.crown-card-name {
+    font-size: 1.2rem;
+    /* Fonte maior, como pedido */
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.crown-card-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.crown-card-price {
+    font-size: 1.1rem;
+    /* Fonte maior, como pedido */
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Ícones de Ação (sem o fundo do botão) */
+.crown-card-actions {
+    display: flex;
+    gap: 1.2rem;
+    /* Aumenta o espaçamento entre os ícones */
+}
+
+.crown-card-actions .action-icon {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.25rem;
+    /* Ícones maiores */
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+}
+
+.crown-card-actions .action-icon:hover {
+    transform: scale(1.2);
+}
+
+.crown-card-actions .action-icon[title="Editar"]:hover {
+    color: var(--warning-color);
+    /* Amarelo no hover */
+}
+
+.crown-card-actions .action-icon[title="Apagar"]:hover {
+    color: var(--error-color);
+    /* Vermelho no hover */
+}
+
+
+/* ======================================= */
+/* ESTILOS PARA O MODAL DE EDIÇÃO MODERNO  */
+/* ======================================= */
+
+/* Aplica o efeito de desfoque (blur) ao fundo do modal */
+.modal-backdrop.show {
+    opacity: 1;
+    /* Garante que o backdrop seja visível */
+}
+
+.modal-backdrop {
+    background-color: rgba(15, 15, 15, 0.3);
+    /* Um fundo escuro e sutil */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    /* Para compatibilidade com Safari */
+}
+
+/* Deixa o conteúdo do modal com efeito de vidro translúcido */
+.modal-content {
+    /* Usando a variável RGB que já definimos antes para transparência */
+    background: rgba(var(--bg-secondary-rgb), 0.75) !important;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Estilos para a coluna da imagem no modal de edição */
+.edit-modal-image-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+}
+
+.edit-modal-image-col .img-thumbnail {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    /* Limita a altura da imagem para não esticar o modal */
+    object-fit: cover;
+    background-color: transparent;
+    border-color: var(--border-color);
+}
+
+.edit-modal-image-col .form-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* =================================================== */
+/* AJUSTES FINAIS NOS CAMPOS DE FORMULÁRIO DOS MODAIS  */
+/* =================================================== */
+
+/* 1. Melhora o contraste dos campos de input e textarea dentro dos modais */
+.modal .form-control {
+    /* Usamos a cor de fundo principal da página para criar um contraste claro */
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+}
+
+/* 2. Garante que o destaque ao selecionar um campo continue a funcionar bem */
+.modal .form-control:focus {
+    background-color: var(--bg-secondary);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(var(--accent-color-rgb), 0.15);
+}
+
+/* 3. Desativa a opção do utilizador redimensionar a área de texto "Descrição" */
+.modal textarea.form-control {
+    resize: none;
+}
+
+/* =================================================== */
+/* AJUSTES FINAIS NOS CAMPOS DE FORMULÁRIO DOS MODAIS  */
+/* =================================================== */
+
+/* Melhora o contraste dos campos de input e textarea dentro dos modais */
+.modal .form-control {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+}
+
+/* Garante que o destaque ao selecionar um campo continue a funcionar bem */
+.modal .form-control:focus {
+    background-color: var(--bg-secondary);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(var(--accent-color-rgb), 0.15);
+}
+
+/* Desativa o redimensionamento manual E controla a barra de scroll */
+.modal textarea.form-control {
+    resize: none;
+    overflow-y: auto;
+    /* ALTERAÇÃO: Só mostra a barra de scroll se for preciso */
+}
+
+/* Garante que a textarea comece com a mesma altura de um input normal */
+.modal textarea.form-control[rows="1"] {
+    min-height: 42px;
+    height: 42px;
+}
+
+/* Design Moderno e Minimalista - Funerária Montserrat */
+:root {
+    --primary-color: #1a1a1a;
+    --secondary-color: #2d2d2d;
+    --accent-color: #6366f1;
+    --accent-light: #818cf8;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --error-color: #ef4444;
+    --bg-primary: #0f0f0f;
+    --bg-secondary: #1f1f1f;
+    --bg-tertiary: #2a2a2a;
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --border-color: #3f3f46;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --gradient-primary: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+    --gradient-dark: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+    --accent-color-rgb: 99, 102, 241;
+    --bg-secondary-rgb: 31, 31, 31;
+}
+
+[data-theme="light"] {
+    --primary-color: #f8f9fa;
+    --secondary-color: #e9ecef;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --border-color: #e2e8f0;
+    --gradient-dark: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+    --accent-color-rgb: 99, 102, 241;
+    --bg-secondary-rgb: 248, 249, 250;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-gradient {
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(var(--accent-color-rgb), 0.3);
+    color: white;
+}
+
+.form-control {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    background: var(--bg-secondary);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb), 0.1);
+    color: var(--text-primary);
+}
+
+.navbar {
+    background: rgba(15, 15, 15, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+[data-theme="light"] .navbar {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary) !important;
+}
+
+.admin-header {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 3rem;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-color);
+    box-shadow: 0 10px 30px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.stat-card i {
+    font-size: 3rem;
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.admin-crown-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.admin-crown-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background: rgba(var(--bg-secondary-rgb), 0.5);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.admin-crown-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(var(--accent-color-rgb), 0.7);
+    box-shadow: 0 8px 30px rgba(var(--accent-color-rgb), 0.2);
+}
+
+.crown-card-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.crown-card-info {
+    flex-grow: 1;
+}
+
+.crown-card-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.crown-card-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.crown-card-price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.crown-card-actions {
+    display: flex;
+    gap: 1.2rem;
+}
+
+.crown-card-actions .action-icon {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+}
+
+.crown-card-actions .action-icon:hover {
+    transform: scale(1.2);
+}
+
+.crown-card-actions .action-icon[title="Editar"]:hover {
+    color: var(--warning-color);
+}
+
+.crown-card-actions .action-icon[title="Apagar"]:hover {
+    color: var(--error-color);
+}
+
+.modal-backdrop.show {
+    opacity: 1;
+}
+
+.modal-backdrop {
+    background-color: rgba(15, 15, 15, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-content {
+    background: rgba(var(--bg-secondary-rgb), 0.8) !important;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    border-radius: 20px;
+}
+
+.modal-header {
+    background: var(--gradient-primary);
+    color: white;
+    border-bottom: none;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+.modal-footer {
+    background: transparent;
+    border-top: 1px solid var(--border-color);
+}
+
+.edit-modal-image-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+}
+
+.edit-modal-image-col .img-thumbnail {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    object-fit: cover;
+    background-color: transparent;
+    border-color: var(--border-color);
+}
+
+.edit-modal-image-col .form-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.modal .form-control {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+}
+
+.modal .form-control:focus {
+    background-color: var(--bg-secondary);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(var(--accent-color-rgb), 0.15);
+}
+
+/* ========================================================================= */
+/* AJUSTE FINAL E DEFINITIVO PARA A TEXTAREA                                 */
+/* ========================================================================= */
+.modal textarea.form-control {
+    /* Impede o utilizador de redimensionar manualmente */
+    resize: none;
+    /* Esconde a barra de scroll vertical POR DEFEITO */
+    overflow-y: hidden;
+}
+
+.modal textarea.form-control[rows="1"] {
+    /* Garante que comece com a altura de um input normal */
+    min-height: 42px;
+    height: 42px;
+}
+
+/* ========================================================================= */
+/* AJUSTES NO CAMPO DE PREÇO (MOEDA)                                         */
+/* ========================================================================= */
+
+/* Esconde as setas de incremento/decremento dos campos de número nos modais */
+.modal input[type='number'] {
+    -moz-appearance: textfield;
+    /* Para Firefox */
+}
+
+.modal input[type='number']::-webkit-outer-spin-button,
+.modal input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    /* Para Chrome, Safari, Edge, etc. */
+    margin: 0;
+}
+
+/* ======================================= */
+/* ESTILOS PARA O NOVO MENU DE ADMIN       */
+/* ======================================= */
+
+/* Botão que abre o menu */
+.btn-dark-outline {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.btn-dark-outline:hover,
+.btn-dark-outline:focus {
+    background-color: var(--bg-tertiary);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+}
+
+/* Estilo do menu dropdown */
+.dropdown-menu {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    padding: 0.5rem;
+}
+
+.dropdown-item {
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 6px;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--accent-color);
+    color: #ffffff;
+}
+
+.dropdown-item i {
+    width: 20px;
+    /* Alinha os ícones */
+}
+
+/* Cor do texto de "Sair" */
+.dropdown-item.text-danger:hover {
+    color: #ffffff !important;
+    background-color: var(--error-color);
+}
+
+/* ================================================================= */
+/* AJUSTE FINAL DE CORES E CONTRASTE PARA O MENU DE ADMIN            */
+/* ================================================================= */
+
+/* Define uma cor de texto padrão para os itens do dropdown */
+.dropdown-item {
+    color: var(--text-secondary);
+    /* Usa a cor de texto secundária do tema */
+}
+
+/* Garante que o texto fique branco no hover para ambos os temas */
+.dropdown-item:hover,
+.dropdown-item:focus {
+    color: #ffffff;
+    background-color: var(--accent-color);
+}
+
+/* Corrige a cor do item "Sair" no hover */
+.dropdown-item.text-danger:hover,
+.dropdown-item.text-danger:focus {
+    color: #ffffff !important;
+    background-color: var(--error-color);
+}
+
+/* Corrige o fundo do menu no tema claro para ter melhor contraste */
+[data-theme="light"] .dropdown-menu {
+    background-color: var(--bg-primary);
+}
+
+/* Corrige a cor do texto do item no tema claro */
+[data-theme="light"] .dropdown-item {
+    color: var(--text-secondary);
+}
+
+/* ================================================================= */
+/* ESTILOS FINAIS E CORRIGIDOS PARA O MENU DE ADMIN                  */
+/* ================================================================= */
+
+/* Botão que abre o menu */
+.btn-dark-outline {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 50px;
+    padding: 0.375rem 0.8rem;
+}
+
+.btn-dark-outline:hover,
+.btn-dark-outline:focus {
+    background-color: var(--bg-tertiary);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+}
+
+.btn-dark-outline::after {
+    display: none;
+    /* Esconde a seta padrão do dropdown */
+}
+
+/* Estilo geral do menu dropdown */
+.dropdown-menu {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    padding: 0.5rem;
+    border-radius: 12px;
+}
+
+[data-theme="light"] .dropdown-menu {
+    background-color: var(--bg-primary);
+    /* Fundo branco no tema claro */
+}
+
+/* Estilo dos itens do menu */
+.dropdown-item {
+    color: var(--text-secondary);
+    /* Cor padrão do texto */
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-item i {
+    width: 25px;
+    text-align: center;
+}
+
+/* --- CORREÇÃO IMPORTANTE: Cor do texto no hover --- */
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--accent-color);
+    color: #ffffff !important;
+    /* !important garante que o texto fique branco */
+}
+
+/* Estilo específico para o botão Sair no hover */
+.dropdown-item.text-danger:hover,
+.dropdown-item.text-danger:focus {
+    background-color: var(--error-color);
+    color: #ffffff !important;
+}
+
+/* ================================================================= */
+/* ESTILOS PARA OS NOVOS BOTÕES DE REORDENAÇÃO                       */
+/* ================================================================= */
+.crown-card-actions .action-icon:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+    transform: none;
+    /* Remove o efeito de hover */
+}
+
+.crown-card-actions form {
+    margin: 0;
+    padding: 0;
+}
+
+/* ================================================================= */
+/* ANIMAÇÃO SUAVE PARA A REORDENAÇÃO DOS CARDS                       */
+/* ================================================================= */
+.admin-crown-card {
+    /* Adiciona uma transição suave a qualquer mudança de 'transform' */
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Classe temporária que vamos usar no JavaScript para a animação de troca */
+.admin-crown-card.is-moving {
+    opacity: 0.5;
+    transform: scale(0.98);
+}

@@ -7,22 +7,18 @@
             {% block title %}Coroas de Flores - Funerária Montserrat{% endblock
             %}
         </title>
-
         <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
             rel="stylesheet"
         />
-
         <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
         />
-
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
             rel="stylesheet"
         />
-
         <link
             rel="stylesheet"
             href="{{ url_for('static', filename='css/style.css') }}"
@@ -36,9 +32,46 @@
                     <span>Funerária Montserrat</span>
                 </a>
                 <div class="d-flex align-items-center">
-                    <span class="navbar-text me-3">
-                        <small>Coroas de Flores</small>
-                    </span>
+                    {% if 'logged_in' in session %}
+                    <div class="dropdown">
+                        <button
+                            class="btn btn-dark-outline dropdown-toggle"
+                            type="button"
+                            id="adminMenuButton"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                        >
+                            <i class="fas fa-user-cog"></i>
+                        </button>
+                        <ul
+                            class="dropdown-menu dropdown-menu-dark dropdown-menu-end"
+                            aria-labelledby="adminMenuButton"
+                        >
+                            <li>
+                                <button
+                                    class="dropdown-item"
+                                    type="button"
+                                    id="themeToggleAdmin"
+                                >
+                                    <i class="fas fa-moon me-2"></i
+                                    ><span class="theme-text">Mudar Tema</span>
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <a
+                                    class="dropdown-item text-danger"
+                                    href="{{ url_for('logout') }}"
+                                    ><i class="fas fa-sign-out-alt me-2"></i
+                                    >Sair</a
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <span class="navbar-text me-3"
+                        ><small>Coroas de Flores</small></span
+                    >
                     <button
                         id="themeToggle"
                         class="theme-toggle-btn"
@@ -46,6 +79,7 @@
                     >
                         <i class="fas fa-sun"></i>
                     </button>
+                    {% endif %}
                 </div>
             </div>
         </nav>
@@ -64,43 +98,36 @@
                     </div>
                     <div class="col-md-6 text-md-end">
                         <p class="small mb-1">
-                            <i class="fas fa-phone me-2"></i>
-                            WhatsApp: (51) 98333-9080
+                            <i class="fas fa-phone me-2"></i>WhatsApp: (51)
+                            98333-9080
                         </p>
                         <p class="small">
-                            <i class="fas fa-globe me-2"></i>
-                            <a
+                            <i class="fas fa-globe me-2"></i
+                            ><a
                                 href="https://funerariamontserrat.com.br"
                                 class="text-decoration-none"
+                                >funerariamontserrat.com.br</a
                             >
-                                funerariamontserrat.com.br
-                            </a>
                         </p>
                         <a
                             href="{{ url_for('login') }}"
                             title="Acesso Administrativo"
                             class="mt-2 d-inline-block"
-                        >
-                            <i class="fas fa-cog"></i>
-                        </a>
+                            ><i class="fas fa-cog"></i
+                        ></a>
                     </div>
                 </div>
             </div>
         </footer>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
         <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
         {% block scripts %}
         <script>
-            // Espera o documento carregar para garantir que a função showToast do main.js já existe
             document.addEventListener('DOMContentLoaded', function() {
               {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                   {% for category, message in messages %}
-                    // Chama a função showToast para cada mensagem do Flask
-                    // O filtro | safe é importante para lidar com caracteres especiais
                     showToast(`{{ message | safe }}`, `{{ 'danger' if category == 'error' else category }}`);
                   {% endfor %}
                 {% endif %}
