@@ -65,7 +65,7 @@
                                 alt="{{ crown.name }}"
                                 width="60"
                                 class="rounded"
-                                style="object-fit: cover; height: 60px;"
+                                style="object-fit: cover; height: 60px"
                             />
                         </td>
                         <td>{{ crown.name }}</td>
@@ -98,7 +98,11 @@
 <div class="modal fade" id="addCrownModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form action="{{ url_for('add_crown') }}" method="POST">
+            <form
+                action="{{ url_for('add_crown') }}"
+                method="POST"
+                enctype="multipart/form-data"
+            >
                 <div class="modal-header">
                     <h5 class="modal-title">Adicionar Nova Coroa</h5>
                     <button
@@ -137,13 +141,20 @@
                         />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">URL da Imagem</label>
+                        <label for="imageFileAdd" class="form-label"
+                            >Imagem da Coroa</label
+                        >
                         <input
-                            type="url"
-                            name="image_url"
                             class="form-control"
+                            type="file"
+                            id="imageFileAdd"
+                            name="image_file"
+                            accept="image/*"
                             required
                         />
+                        <small class="form-text text-muted"
+                            >A imagem é obrigatória.</small
+                        >
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -170,6 +181,7 @@
             <form
                 action="{{ url_for('edit_crown', crown_id=crown.id) }}"
                 method="POST"
+                enctype="multipart/form-data"
             >
                 <div class="modal-header">
                     <h5 class="modal-title">Editar Coroa: {{ crown.name }}</h5>
@@ -213,14 +225,31 @@
                         />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">URL da Imagem</label>
+                        <label class="form-label">Imagem Atual</label>
+                        <div>
+                            <img
+                                src="{{ crown.image_url }}"
+                                alt="Imagem atual"
+                                class="img-thumbnail mb-2"
+                                width="150"
+                            />
+                        </div>
+                        <label
+                            for="imageFileEdit-{{ crown.id }}"
+                            class="form-label"
+                            >Carregar Nova Imagem (Opcional)</label
+                        >
                         <input
-                            type="url"
-                            name="image_url"
                             class="form-control"
-                            value="{{ crown.image_url }}"
-                            required
+                            type="file"
+                            id="imageFileEdit-{{ crown.id }}"
+                            name="image_file"
+                            accept="image/*"
                         />
+                        <small class="form-text text-muted"
+                            >Selecione uma nova imagem apenas se quiser
+                            substituir a atual.</small
+                        >
                     </div>
                 </div>
                 <div class="modal-footer">

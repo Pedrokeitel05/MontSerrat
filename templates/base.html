@@ -8,32 +8,27 @@
             %}
         </title>
 
-        <!-- Bootstrap CSS -->
         <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
             rel="stylesheet"
         />
 
-        <!-- Font Awesome -->
         <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
         />
 
-        <!-- Google Fonts -->
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
             rel="stylesheet"
         />
 
-        <!-- Custom CSS -->
         <link
             rel="stylesheet"
             href="{{ url_for('static', filename='css/style.css') }}"
         />
     </head>
     <body>
-        <!-- Navigation -->
         <nav class="navbar navbar-expand-lg">
             <div class="container">
                 <a class="navbar-brand" href="{{ url_for('index') }}">
@@ -44,34 +39,18 @@
                     <span class="navbar-text me-3">
                         <small>Coroas de Flores</small>
                     </span>
-                    <button id="themeToggle" class="theme-toggle-btn" title="Alternar tema">
+                    <button
+                        id="themeToggle"
+                        class="theme-toggle-btn"
+                        title="Alternar tema"
+                    >
                         <i class="fas fa-sun"></i>
                     </button>
                 </div>
             </div>
         </nav>
 
-        <!-- Main Content -->
-        <main>
-            {% with messages = get_flashed_messages(with_categories=true) %} {%
-            if messages %}
-            <div class="container mt-3">
-                {% for category, message in messages %}
-                <div
-                    class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show"
-                    role="alert"
-                >
-                    {{ message }}
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="alert"
-                    ></button>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %} {% endwith %} {% block content %}{% endblock %}
-        </main>
+        <main>{% block content %}{% endblock %}</main>
 
         <footer class="py-4">
             <div class="container">
@@ -109,12 +88,25 @@
             </div>
         </footer>
 
-        <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-        <!-- Custom JS -->
         <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-        {% block scripts %}{% endblock %}
+        {% block scripts %}
+        <script>
+            // Espera o documento carregar para garantir que a função showToast do main.js já existe
+            document.addEventListener('DOMContentLoaded', function() {
+              {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                  {% for category, message in messages %}
+                    // Chama a função showToast para cada mensagem do Flask
+                    // O filtro | safe é importante para lidar com caracteres especiais
+                    showToast(`{{ message | safe }}`, `{{ 'danger' if category == 'error' else category }}`);
+                  {% endfor %}
+                {% endif %}
+              {% endwith %}
+            });
+        </script>
+        {% endblock %}
     </body>
 </html>

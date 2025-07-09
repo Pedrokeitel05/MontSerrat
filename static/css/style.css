@@ -663,8 +663,15 @@ body {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
 }
 
 .success-container h1 {
@@ -929,53 +936,53 @@ footer a:hover {
         min-height: 60vh;
         text-align: center;
     }
-    
+
     .hero-section h1 {
         font-size: 2.5rem;
     }
-    
+
     .hero-section .lead {
         font-size: 1.1rem;
     }
-    
+
     .section-title h2 {
         font-size: 2rem;
     }
-    
+
     .card-img-container {
         height: 220px;
     }
-    
+
     .checkout-container {
         padding: 1rem;
     }
-    
+
     .order-summary,
     .payment-section {
         padding: 1.5rem;
     }
-    
+
     .admin-stats {
         grid-template-columns: 1fr;
     }
-    
+
     .admin-header h1 {
         font-size: 2rem;
     }
-    
+
     .stat-card {
         padding: 1.5rem;
     }
-    
+
     .table-container {
         font-size: 0.85rem;
     }
-    
+
     .crown-preview {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .crown-preview img {
         width: 100px;
         height: 100px;
@@ -986,19 +993,19 @@ footer a:hover {
     .hero-section h1 {
         font-size: 2rem;
     }
-    
+
     .section-title h2 {
         font-size: 1.5rem;
     }
-    
+
     .modal-body {
         padding: 1rem;
     }
-    
+
     .checkout-container {
         padding: 0.5rem;
     }
-    
+
     .success-container {
         padding: 2rem 1rem;
     }
@@ -1010,6 +1017,7 @@ footer a:hover {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1021,6 +1029,7 @@ footer a:hover {
         opacity: 0;
         transform: translateX(-30px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -1032,6 +1041,7 @@ footer a:hover {
         opacity: 0;
         transform: translateX(30px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -1072,8 +1082,13 @@ footer a:hover {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Toast Notifications */
@@ -1141,4 +1156,29 @@ footer a:hover {
 .card-hover:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
+}
+
+/* Toast container moderno */
+#toast-container {
+    max-width: 400px;
+    z-index: 1055;
+    padding: 1rem;
+}
+
+.toast {
+    border-radius: 10px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 30%, 0);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
 }
