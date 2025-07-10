@@ -48,6 +48,23 @@
                             aria-labelledby="adminMenuButton"
                         >
                             <li>
+                                <a
+                                    class="dropdown-item"
+                                    href="{{ url_for('admin') }}"
+                                    ><i class="fas fa-crown me-2"></i>Gerir
+                                    Coroas</a
+                                >
+                            </li>
+                            <li>
+                                <a
+                                    class="dropdown-item"
+                                    href="{{ url_for('order_management') }}"
+                                    ><i class="fas fa-tasks me-2"></i>Gestor de
+                                    Pedidos</a
+                                >
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
                                 <button
                                     class="dropdown-item"
                                     type="button"

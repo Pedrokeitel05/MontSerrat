@@ -2103,3 +2103,118 @@ body {
     opacity: 0.5;
     transform: scale(0.98);
 }
+
+/* ================================================================= */
+/* ANIMAÇÃO AVANÇADA PARA A REORDENAÇÃO DOS CARDS                    */
+/* ================================================================= */
+
+.admin-crown-card {
+    /* Adiciona uma transição suave para as propriedades transform e opacity */
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease;
+    /* Necessário para que o z-index funcione */
+    position: relative;
+}
+
+/* Classe para o cartão que passa "por cima" */
+.admin-crown-card.is-moving-over {
+    z-index: 10;
+    /* Garante que este cartão fique sobre os outros */
+    transform: scale(1.03);
+    /* Aumenta ligeiramente o tamanho */
+    box-shadow: 0 12px 40px rgba(var(--accent-color-rgb), 0.3);
+    /* Sombra mais pronunciada */
+}
+
+/* Classe para o cartão que fica "por baixo" */
+.admin-crown-card.is-moving-under {
+    z-index: 1;
+    transform: scale(0.97);
+    /* Diminui ligeiramente o tamanho */
+    opacity: 0.7;
+}
+
+/* ================================================================= */
+/* ESTILOS PARA O GESTOR DE PEDIDOS (KANBAN BOARD)                   */
+/* ================================================================= */
+.order-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.order-column {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1rem;
+    border-top: 4px solid var(--accent-color);
+}
+
+.column-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.column-body {
+    min-height: 200px;
+    /* Garante que a coluna tenha uma área para soltar, mesmo vazia */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.order-card {
+    background-color: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: grab;
+    border-left: 3px solid var(--accent-color);
+    transition: all 0.2s ease;
+}
+
+.order-card.dragging {
+    opacity: 0.5;
+    transform: scale(1.05);
+    background-color: var(--accent-color);
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.card-customer {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.card-product {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.whatsapp-icon {
+    font-size: 1.2rem;
+    color: #25D366;
+    transition: transform 0.2s ease;
+}
+
+.whatsapp-icon:hover {
+    transform: scale(1.2);
+}

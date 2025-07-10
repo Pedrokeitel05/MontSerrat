@@ -109,59 +109,42 @@
 {{ super() }}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // ===================================================================
-        // SCRIPT DE REORDENAÇÃO FINAL (COM ANIMAÇÃO E SEM RECARREGAR)
-        // ===================================================================
+        // SCRIPT DE REORDENAÇÃO
         document.querySelectorAll(".move-btn").forEach((button) => {
             button.addEventListener("click", async function (e) {
                 e.preventDefault();
                 const url = this.dataset.url;
                 const direction = this.dataset.direction;
                 const card = this.closest(".admin-crown-card");
-
-                // Troca visual instantânea
                 const sibling =
                     direction === "up"
                         ? card.previousElementSibling
                         : card.nextElementSibling;
-                if (sibling) {
-                    card.classList.add("is-moving");
-                    sibling.classList.add("is-moving");
+                if (!sibling) return;
 
-                    // Animação de troca
-                    setTimeout(() => {
-                        if (direction === "up") {
-                            card.parentElement.insertBefore(card, sibling);
-                        } else {
-                            card.parentElement.insertBefore(sibling, card);
-                        }
-                        updateMoveButtons();
+                card.classList.add("is-moving-over");
+                sibling.classList.add("is-moving-under");
 
-                        card.classList.remove("is-moving");
-                        sibling.classList.remove("is-moving");
-                    }, 200);
+                await new Promise((resolve) => setTimeout(resolve, 20));
+
+                if (direction === "up") {
+                    card.parentElement.insertBefore(card, sibling);
+                } else {
+                    card.parentElement.insertBefore(sibling, card);
                 }
 
-                // Envio para o servidor em segundo plano
+                card.classList.remove("is-moving-over");
+                sibling.classList.remove("is-moving-under");
+
+                updateMoveButtons();
+
                 try {
-                    const response = await fetch(url, {
+                    await fetch(url, {
                         method: "POST",
                         headers: { "X-Requested-With": "XMLHttpRequest" },
                     });
-                    if (!response.ok) throw new Error("Falha no servidor.");
-                    const result = await response.json();
-                    if (!result.success) {
-                        // Se o servidor falhar, podemos reverter a troca ou mostrar um erro
-                        showToast(
-                            result.message || "Erro ao salvar a ordem.",
-                            "danger",
-                        );
-                    }
                 } catch (error) {
-                    showToast(
-                        "Erro de comunicação. A ordem pode não ter sido salva.",
-                        "danger",
-                    );
+                    showToast("Erro ao salvar a ordem.", "danger");
                 }
             });
         });
@@ -169,18 +152,15 @@
         function updateMoveButtons() {
             const allCards = document.querySelectorAll(".admin-crown-card");
             allCards.forEach((card, index) => {
-                const upBtn = card.querySelector(
-                    '.move-btn[data-direction="up"]',
-                );
-                const downBtn = card.querySelector(
+                card.querySelector('.move-btn[data-direction="up"]').disabled =
+                    index === 0;
+                card.querySelector(
                     '.move-btn[data-direction="down"]',
-                );
-                if (upBtn) upBtn.disabled = index === 0;
-                if (downBtn) downBtn.disabled = index === allCards.length - 1;
+                ).disabled = index === allCards.length - 1;
             });
         }
 
-        // O resto dos seus scripts continua aqui...
+        // SCRIPTS DOS MODAIS
         function autoGrow(el) {
             el.style.height = "auto";
             el.style.height = el.scrollHeight + "px";
@@ -189,24 +169,41 @@
             .querySelectorAll('textarea[name="description"]')
             .forEach((t) => {
                 t.addEventListener("input", () => autoGrow(t));
-                t.closest(".modal")?.addEventListener("shown.bs.modal", () =>
-                    autoGrow(t),
-                );
+                const modal = t.closest(".modal");
+                if (modal)
+                    modal.addEventListener("shown.bs.modal", () => autoGrow(t));
             });
+
         function formatCurrency(input) {
             let v = input.value.replace(/\D/g, "");
+            let n = parseInt(v, 10) / 100 || 0;
             input.value = new Intl.NumberFormat("pt-BR", {
                 style: "currency",
                 currency: "BRL",
-            }).format(parseInt(v, 10) / 100 || 0);
+            }).format(n);
         }
         document.querySelectorAll('input[name="price"]').forEach((p) => {
             p.addEventListener("input", () => formatCurrency(p));
-            p.closest(".modal")?.addEventListener("shown.bs.modal", () =>
-                formatCurrency(p),
-            );
+            const modal = p.closest(".modal");
+            if (modal)
+                modal.addEventListener("shown.bs.modal", () =>
+                    formatCurrency(p),
+                );
         });
-        // ... (script de upload)
+
+        async function handleImageUpload(
+            fileInput,
+            hiddenInput,
+            progressBar,
+            saveButton,
+        ) {
+            // ... (código de upload sem alterações) ...
+        }
+        document
+            .querySelectorAll('[id^="editCrownModal-"], #addCrownModal')
+            .forEach((modal) => {
+                // ... (lógica de inicialização do upload sem alterações) ...
+            });
     });
 </script>
 {% endblock %}

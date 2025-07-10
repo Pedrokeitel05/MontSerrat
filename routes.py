@@ -10,19 +10,18 @@ import cloudinary.uploader
 import time
 import hashlib
 
-# Configurações (sem alteração)
+# Configurações
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 YOUR_DOMAIN = os.environ.get('REPLIT_DEV_DOMAIN', 'localhost:5000')
 
 
-# Rotas Públicas (sem alteração)
+# --- ROTAS PÚBLICAS ---
 @app.route('/')
 def index():
     crowns = FlowerCrown.query.order_by(FlowerCrown.position).all()
     return render_template('index.html', crowns=crowns)
 
 
-# ... (outras rotas públicas continuam iguais) ...
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
     crown_id = request.form.get('crown_id')
@@ -39,20 +38,23 @@ def add_to_cart():
 
 @app.route('/checkout')
 def checkout():
-    if 'cart' not in session: return redirect(url_for('index'))
+    if 'cart' not in session:
+        flash('Nenhum item no carrinho.', 'error')
+        return redirect(url_for('index'))
     return render_template('checkout.html', cart=session['cart'])
 
 
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
-    if 'cart' not in session: return redirect(url_for('index'))
-    cart, customer_info = session['cart'], {
+    if 'cart' not in session:
+        return redirect(url_for('index'))
+    cart = session['cart']
+    customer_info = {
         'customer_name': request.form.get('customer_name'),
         'customer_email': request.form.get('customer_email'),
         'customer_phone': request.form.get('customer_phone'),
         'payment_method': request.form.get('payment_method'),
-        'installments': int(request.form.get('installments', 1)),
-        'total_amount': 0.0
+        'installments': int(request.form.get('installments', 1))
     }
     base_price = cart.get('crown_price', 0.0)
     customer_info['total_amount'] = base_price * (
@@ -81,7 +83,7 @@ def create_checkout_session():
             customer_email=customer_info['customer_email'])
         return redirect(checkout_session.url, code=303)
     except Exception as e:
-        flash(f'Erro: {str(e)}', 'error')
+        flash(f'Erro ao processar pagamento: {str(e)}', 'error')
         return redirect(url_for('checkout'))
 
 
@@ -104,7 +106,7 @@ def payment_success():
                           payment_method=customer_info.get('payment_method'),
                           installments=customer_info.get('installments'),
                           total_amount=customer_info.get('total_amount'),
-                          status='completed')
+                          status='pending')
             db.session.add(order)
             db.session.commit()
             session.pop('cart', None)
@@ -114,8 +116,8 @@ def payment_success():
                 'customer_name': customer_info.get('customer_name')
             }
             return redirect(url_for('success'))
-    except Exception:
-        pass
+    except Exception as e:
+        flash(f'Erro ao confirmar pagamento: {str(e)}', 'error')
     return redirect(url_for('checkout'))
 
 
@@ -138,21 +140,23 @@ def login_required(f):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST' and request.form.get(
-            'username') == os.environ.get(
+    if request.method == 'POST':
+        if request.form.get('username') == os.environ.get(
                 'ADMIN_USER',
                 'admin') and request.form.get('password') == os.environ.get(
                     'ADMIN_PASSWORD', '1234'):
-        session['logged_in'] = True
-        return redirect(url_for('admin'))
-    elif request.method == 'POST':
-        flash('Credenciais inválidas.', 'error')
+            session['logged_in'] = True
+            flash('Login realizado com sucesso!', 'success')
+            return redirect(url_for('admin'))
+        else:
+            flash('Credenciais inválidas.', 'error')
     return render_template('login.html')
 
 
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
+    flash('Sessão terminada com sucesso.', 'success')
     return redirect(url_for('login'))
 
 
@@ -182,7 +186,7 @@ def add_crown():
         flash(f'Coroa "{new_crown.name}" adicionada!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Erro: {str(e)}', 'error')
+        flash(f'Erro ao adicionar coroa: {str(e)}', 'error')
     return redirect(url_for('admin'))
 
 
@@ -201,7 +205,7 @@ def edit_crown(crown_id):
         flash(f'Coroa "{crown.name}" atualizada!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Erro: {str(e)}', 'error')
+        flash(f'Erro ao editar coroa: {str(e)}', 'error')
     return redirect(url_for('admin'))
 
 
@@ -215,7 +219,7 @@ def delete_crown(crown_id):
         flash(f'Coroa "{crown.name}" removida.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Erro: {str(e)}', 'error')
+        flash(f'Erro ao remover coroa: {str(e)}', 'error')
     return redirect(url_for('admin'))
 
 
@@ -239,43 +243,69 @@ def sign_upload():
     })
 
 
-# ===================================================================
-# ROTA DE REORDENAÇÃO CORRIGIDA
-# ===================================================================
 @app.route('/admin/crown/move/<int:crown_id>/<string:direction>',
            methods=['POST'])
 @login_required
 def move_crown(crown_id, direction):
     crowns = list(FlowerCrown.query.order_by(FlowerCrown.position).all())
-
-    # Encontra o índice do item a ser movido
-    idx_to_move = -1
-    for i, crown in enumerate(crowns):
-        if crown.id == crown_id:
-            idx_to_move = i
-            break
-
+    idx_to_move = next((i for i, c in enumerate(crowns) if c.id == crown_id),
+                       -1)
     if idx_to_move == -1:
         return jsonify({
             'success': False,
             'message': 'Coroa não encontrada.'
         }), 404
-
-    # Calcula o novo índice e faz a troca na lista
     if direction == 'up' and idx_to_move > 0:
         crowns.insert(idx_to_move - 1, crowns.pop(idx_to_move))
     elif direction == 'down' and idx_to_move < len(crowns) - 1:
         crowns.insert(idx_to_move + 1, crowns.pop(idx_to_move))
     else:
         return jsonify({'success': False, 'message': 'Movimento inválido.'})
-
-    # Reatribui todas as posições para garantir a consistência
     for i, crown in enumerate(crowns):
         crown.position = i + 1
-
     try:
         db.session.commit()
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+
+@app.route('/admin/orders')
+@login_required
+def order_management():
+    orders_pending = Order.query.filter_by(status='pending').order_by(
+        Order.order_date.desc()).all()
+    orders_in_progress = Order.query.filter_by(status='in_progress').order_by(
+        Order.order_date.desc()).all()
+    orders_delivered = Order.query.filter_by(status='delivered').order_by(
+        Order.order_date.desc()).all()
+    return render_template('orders.html',
+                           pending=orders_pending,
+                           in_progress=orders_in_progress,
+                           delivered=orders_delivered)
+
+
+@app.route('/admin/order/update_status/<int:order_id>', methods=['POST'])
+@login_required
+def update_order_status(order_id):
+    order = Order.query.get_or_404(order_id)
+    new_status = request.json.get('status')
+    if new_status not in ['pending', 'in_progress', 'delivered']:
+        return jsonify({'success': False, 'message': 'Status inválido.'}), 400
+    try:
+        order.status = new_status
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Status do pedido atualizado.'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500

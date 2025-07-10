@@ -1,0 +1,192 @@
+{% extends "base.html" %} {% block title %}Gestor de Pedidos{% endblock %} {%
+block content %}
+<div class="admin-header">
+    <div class="container">
+        <h1><i class="fas fa-tasks me-2"></i>Gestor de Pedidos</h1>
+        <p>Arraste e solte os pedidos para atualizar o status.</p>
+    </div>
+</div>
+
+<div class="container-fluid my-4">
+    <div class="order-board">
+        <div class="order-column" id="pending" data-status="pending">
+            <h5 class="column-title">
+                <i class="fas fa-inbox me-2"></i>A Fazer ({{ pending|length }})
+            </h5>
+            <div class="column-body">
+                {% for order in pending %}
+                <div
+                    class="order-card"
+                    draggable="true"
+                    data-order-id="{{ order.id }}"
+                >
+                    <div class="card-customer">{{ order.customer_name }}</div>
+                    <div class="card-product">{{ order.crown_name }}</div>
+                    <div class="card-footer">
+                        <small
+                            >{{ order.order_date.strftime('%d/%m/%Y %H:%M')
+                            }}</small
+                        >
+                        <a
+                            href="https://api.whatsapp.com/send?phone={{ order.customer_phone }}&text=Olá, {{ order.customer_name }}! Sobre o seu pedido #{{ order.id }}..."
+                            target="_blank"
+                            class="whatsapp-icon"
+                            title="Contatar no WhatsApp"
+                        >
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="order-column" id="in_progress" data-status="in_progress">
+            <h5 class="column-title">
+                <i class="fas fa-sync-alt fa-spin me-2"></i>Em Andamento ({{
+                in_progress|length }})
+            </h5>
+            <div class="column-body">
+                {% for order in in_progress %}
+                <div
+                    class="order-card"
+                    draggable="true"
+                    data-order-id="{{ order.id }}"
+                >
+                    <div class="card-customer">{{ order.customer_name }}</div>
+                    <div class="card-product">{{ order.crown_name }}</div>
+                    <div class="card-footer">
+                        <small
+                            >{{ order.order_date.strftime('%d/%m/%Y %H:%M')
+                            }}</small
+                        >
+                        <a
+                            href="https://api.whatsapp.com/send?phone={{ order.customer_phone }}"
+                            target="_blank"
+                            class="whatsapp-icon"
+                            title="Contatar no WhatsApp"
+                        >
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="order-column" id="delivered" data-status="delivered">
+            <h5 class="column-title">
+                <i class="fas fa-check-circle me-2"></i>Entregues ({{
+                delivered|length }})
+            </h5>
+            <div class="column-body">
+                {% for order in delivered %}
+                <div
+                    class="order-card"
+                    draggable="true"
+                    data-order-id="{{ order.id }}"
+                >
+                    <div class="card-customer">{{ order.customer_name }}</div>
+                    <div class="card-product">{{ order.crown_name }}</div>
+                    <div class="card-footer">
+                        <small
+                            >{{ order.order_date.strftime('%d/%m/%Y %H:%M')
+                            }}</small
+                        >
+                        <a
+                            href="https://api.whatsapp.com/send?phone={{ order.customer_phone }}"
+                            target="_blank"
+                            class="whatsapp-icon"
+                            title="Contatar no WhatsApp"
+                        >
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block scripts %} {{ super() }}
+<script>
+    // Script para o "arrastar e soltar" (drag and drop)
+    document.addEventListener("DOMContentLoaded", function () {
+        const cards = document.querySelectorAll(".order-card");
+        const columns = document.querySelectorAll(".order-column");
+
+        let draggedCard = null;
+
+        cards.forEach((card) => {
+            card.addEventListener("dragstart", () => {
+                draggedCard = card;
+                setTimeout(() => card.classList.add("dragging"), 0);
+            });
+            card.addEventListener("dragend", () => {
+                draggedCard.classList.remove("dragging");
+                draggedCard = null;
+            });
+        });
+
+        columns.forEach((column) => {
+            column.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(column, e.clientY);
+                const columnBody = column.querySelector(".column-body");
+                if (afterElement == null) {
+                    columnBody.appendChild(draggedCard);
+                } else {
+                    columnBody.insertBefore(draggedCard, afterElement);
+                }
+            });
+
+            column.addEventListener("drop", async (e) => {
+                e.preventDefault();
+                const newStatus = column.dataset.status;
+                const orderId = draggedCard.dataset.orderId;
+
+                // Atualiza o status no servidor
+                try {
+                    const response = await fetch(
+                        `/admin/order/update_status/${orderId}`,
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ status: newStatus }),
+                        },
+                    );
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast("Status do pedido atualizado!", "success");
+                    } else {
+                        showToast(
+                            result.message || "Erro ao atualizar status.",
+                            "danger",
+                        );
+                    }
+                } catch (error) {
+                    showToast("Erro de comunicação.", "danger");
+                }
+            });
+        });
+
+        function getDragAfterElement(column, y) {
+            const draggableElements = [
+                ...column.querySelectorAll(".order-card:not(.dragging)"),
+            ];
+            return draggableElements.reduce(
+                (closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                },
+                { offset: Number.NEGATIVE_INFINITY },
+            ).element;
+        }
+    });
+</script>
+{% endblock %}
