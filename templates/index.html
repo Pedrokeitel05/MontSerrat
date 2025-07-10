@@ -1,16 +1,14 @@
-{% extends "base.html" %}
-
-{% block title %}Coroas de Flores - Funerária Montserrat{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Coroas de Flores - Funerária Mont
+Serrat{% endblock %} {% block content %}
 <div class="hero-section">
     <div class="container">
         <div class="row align-items-center py-5">
             <div class="col-lg-6 fade-in-left">
                 <h1 class="mb-4">Coroas de Flores</h1>
                 <p class="lead mb-4">
-                    Homenageie seus entes queridos com nossas coroas de flores cuidadosamente elaboradas. 
-                    Cada arranjo é criado com carinho e respeito, transmitindo paz e amor eterno.
+                    Homenageie seus entes queridos com nossas coroas de flores
+                    cuidadosamente elaboradas. Cada arranjo é criado com carinho
+                    e respeito, transmitindo paz e amor eterno.
                 </p>
                 <div class="hero-feature">
                     <i class="fas fa-heart"></i>
@@ -18,8 +16,11 @@
                 </div>
             </div>
             <div class="col-lg-6 fade-in-right">
-                <img src="https://pixabay.com/get/g57ee7869b960ed6ae5c9bead7f88f7031ddf7e47a779faa613b2400dc73e5879e81eda96c58c7d2da632e5f6129d52df64bb90efad53da3eafe07907ba3b26f2_1280.jpg" 
-                     alt="Arranjo Floral" class="img-fluid">
+                <img
+                    src="{{ url_for('static', filename='img/hero-image.png') }}"
+                    alt="Arranjo Floral de rosas brancas e cor-de-rosa"
+                    class="img-fluid"
+                />
             </div>
         </div>
     </div>
@@ -29,13 +30,17 @@
     <div class="section-title">
         <h2>Escolha sua Coroa de Flores</h2>
     </div>
-    
+
     <div class="row">
         {% for crown in crowns %}
-        <div class="col-lg-4 col-md-6 mb-4">
+        <div class="col-6 col-lg-4 col-md-6 mb-4">
             <div class="card crown-card h-100 fade-in-up">
                 <div class="card-img-container">
-                    <img src="{{ crown.image_url }}" class="card-img-top" alt="{{ crown.name }}">
+                    <img
+                        src="{{ crown.image_url }}"
+                        class="card-img-top"
+                        alt="{{ crown.name }}"
+                    />
                     <div class="price-badge">
                         R$ {{ "%.2f"|format(crown.price) }}
                     </div>
@@ -43,11 +48,13 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ crown.name }}</h5>
                     <p class="card-text">{{ crown.description }}</p>
-                    <button class="btn btn-customize" 
-                            data-crown-id="{{ crown.id }}"
-                            data-crown-name="{{ crown.name }}"
-                            data-crown-price="{{ crown.price }}"
-                            data-crown-image="{{ crown.image_url }}">
+                    <button
+                        class="btn btn-customize"
+                        data-crown-id="{{ crown.id }}"
+                        data-crown-name="{{ crown.name }}"
+                        data-crown-price="{{ crown.price }}"
+                        data-crown-image="{{ crown.image_url }}"
+                    >
                         <i class="fas fa-edit me-2"></i>Personalizar Mensagem
                     </button>
                 </div>
@@ -57,155 +64,440 @@
     </div>
 </div>
 
-<!-- Customization Modal -->
-<div class="modal fade" id="customizeModal" tabindex="-1" aria-labelledby="customizeModalLabel" aria-hidden="true">
+<div
+    class="modal fade"
+    id="customizeModal"
+    tabindex="-1"
+    aria-labelledby="customizeModalLabel"
+    aria-hidden="true"
+>
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="customizeModalLabel">Personalizar Mensagem</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div>
+                    <h5 class="modal-title" id="headerCrownName"></h5>
+                    <p
+                        class="mb-0 header-crown-price"
+                        id="headerCrownPrice"
+                    ></p>
+                </div>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
             </div>
             <div class="modal-body">
-                <form id="customizeForm" method="POST" action="{{ url_for('add_to_cart') }}">
-                    <input type="hidden" name="crown_id" id="crownId">
-                    
+                <form
+                    id="customizeForm"
+                    method="POST"
+                    action="{{ url_for('add_to_cart') }}"
+                >
+                    <input type="hidden" name="crown_id" id="crownId" />
+                    <textarea
+                        name="custom_message"
+                        id="finalCustomMessage"
+                        style="display: none"
+                    ></textarea>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="preview-container">
-                                <canvas id="previewCanvas" width="400" height="300"></canvas>
+                                <canvas
+                                    id="previewCanvas"
+                                    width="400"
+                                    height="300"
+                                ></canvas>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="customMessage" class="form-label">Mensagem Personalizada</label>
-                                <textarea class="form-control" id="customMessage" name="custom_message" 
-                                          rows="4" placeholder="Digite sua mensagem aqui..."></textarea>
-                                <div class="form-text">
-                                    <small class="text-muted">Máximo 100 caracteres</small>
+                            <div id="messageInitialStep">
+                                <label class="form-label"
+                                    >Para a sua homenagem:</label
+                                >
+                                <div class="d-grid gap-2">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary suggestion-step-btn"
+                                        data-step="familiar"
+                                    >
+                                        Sugestão para Familiar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary suggestion-step-btn"
+                                        data-step="empresarial"
+                                    >
+                                        Sugestão Empresarial
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary suggestion-step-btn"
+                                        data-step="personalizada"
+                                    >
+                                        Escrever Mensagem Personalizada
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <div class="selected-crown-info">
-                                <h6 id="selectedCrownName"></h6>
-                                <p class="text-muted mb-2" id="selectedCrownPrice"></p>
+
+                            <div id="messageFamiliarStep" style="display: none">
+                                <label class="form-label"
+                                    >Escolha uma das nossas sugestões:</label
+                                >
+                                <div class="d-grid gap-2">
+                                    <button
+                                        type="button"
+                                        class="btn btn-suggestion"
+                                    >
+                                        Com eterna saudade e respeito.
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-suggestion"
+                                    >
+                                        Nossas memórias contigo serão eternas.
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-suggestion"
+                                    >
+                                        Com carinho e gratidão por tudo que você
+                                        foi.
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary btn-sm mt-3 btn-back"
+                                >
+                                    ← Voltar
+                                </button>
+                            </div>
+
+                            <div
+                                id="messageEmpresarialStep"
+                                style="display: none"
+                            >
+                                <label class="form-label"
+                                    >Complete a homenagem:</label
+                                >
+                                <div class="d-grid gap-2 suggestion-group">
+                                    <input
+                                        class="form-check-input visually-hidden"
+                                        type="radio"
+                                        name="empresaRadio"
+                                        id="radio1"
+                                        value="Com Carinho e Homenagem do Escritório "
+                                    />
+                                    <label
+                                        class="btn btn-suggestion"
+                                        for="radio1"
+                                        >Com Carinho e Homenagem do
+                                        Escritório...</label
+                                    >
+
+                                    <input
+                                        class="form-check-input visually-hidden"
+                                        type="radio"
+                                        name="empresaRadio"
+                                        id="radio2"
+                                        value="Homenagem da Diretoria e Funcionários da "
+                                    />
+                                    <label
+                                        class="btn btn-suggestion"
+                                        for="radio2"
+                                        >Homenagem da Diretoria e Funcionários
+                                        da...</label
+                                    >
+
+                                    <input
+                                        class="form-check-input visually-hidden"
+                                        type="radio"
+                                        name="empresaRadio"
+                                        id="radio3"
+                                        value="Nossos Sentimentos, Grupo "
+                                    />
+                                    <label
+                                        class="btn btn-suggestion"
+                                        for="radio3"
+                                        >Nossos Sentimentos, Grupo...</label
+                                    >
+                                </div>
+                                <input
+                                    type="text"
+                                    class="form-control mt-3"
+                                    id="empresaLacuna"
+                                    placeholder="Nome da empresa ou grupo"
+                                    style="display: none"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary btn-sm mt-3 btn-back"
+                                >
+                                    ← Voltar
+                                </button>
+                            </div>
+
+                            <div
+                                id="messagePersonalizadaStep"
+                                style="display: none"
+                            >
+                                <label
+                                    for="customMessageInput"
+                                    class="form-label"
+                                    >Mensagem Personalizada</label
+                                >
+                                <textarea
+                                    class="form-control"
+                                    id="customMessageInput"
+                                    rows="1"
+                                    placeholder="Escreva a sua homenagem..."
+                                ></textarea>
+                                <div class="form-text">
+                                    <small class="text-muted"
+                                        >Máximo 100 caracteres</small
+                                    >
+                                </div>
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary btn-sm mt-3 btn-back"
+                                >
+                                    ← Voltar
+                                </button>
                             </div>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" form="customizeForm" class="btn btn-primary">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Cancelar
+                </button>
+                <button
+                    type="submit"
+                    form="customizeForm"
+                    class="btn btn-primary"
+                >
                     <i class="fas fa-cart-plus me-2"></i>Adicionar ao Carrinho
                 </button>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %} {{ super() }}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const customizeModal = new bootstrap.Modal(document.getElementById('customizeModal'));
-    const canvas = document.getElementById('previewCanvas');
-    const ctx = canvas.getContext('2d');
-    const customMessageInput = document.getElementById('customMessage');
-    
-    let currentCrownImage = null;
-    
-    // Handle customize button clicks
-    document.querySelectorAll('.btn-customize').forEach(button => {
-        button.addEventListener('click', function() {
-            const crownId = this.dataset.crownId;
-            const crownName = this.dataset.crownName;
-            const crownPrice = parseFloat(this.dataset.crownPrice);
-            const crownImage = this.dataset.crownImage;
-            
-            // Update modal content
-            document.getElementById('crownId').value = crownId;
-            document.getElementById('selectedCrownName').textContent = crownName;
-            document.getElementById('selectedCrownPrice').textContent = `R$ ${crownPrice.toFixed(2)}`;
-            
-            // Load image and show modal
-            loadCrownImage(crownImage);
-            customizeModal.show();
+    document.addEventListener("DOMContentLoaded", function () {
+        // --- ELEMENTOS DO DOM ---
+        const customizeModal = new bootstrap.Modal(
+            document.getElementById("customizeModal"),
+        );
+        const customizeModalEl = document.getElementById("customizeModal");
+        const canvas = document.getElementById("previewCanvas");
+        const ctx = canvas.getContext("2d");
+        let currentCrownImage = null;
+
+        const initialStep = document.getElementById("messageInitialStep");
+        const familiarStep = document.getElementById("messageFamiliarStep");
+        const empresarialStep = document.getElementById(
+            "messageEmpresarialStep",
+        );
+        const personalizadaStep = document.getElementById(
+            "messagePersonalizadaStep",
+        );
+        const allSteps = [
+            initialStep,
+            familiarStep,
+            empresarialStep,
+            personalizadaStep,
+        ];
+
+        const finalMessageTextarea =
+            document.getElementById("finalCustomMessage");
+        const customMessageInput =
+            document.getElementById("customMessageInput");
+        const empresaLacuna = document.getElementById("empresaLacuna");
+        const empresaRadios = document.querySelectorAll(
+            'input[name="empresaRadio"]',
+        );
+
+        // --- FUNÇÕES AUXILIARES ---
+
+        function autoGrow(element) {
+            element.style.height = "5px";
+            element.style.height = element.scrollHeight + "px";
+        }
+
+        function loadCrownImage(imageUrl, callback) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+                currentCrownImage = img;
+                if (callback) callback();
+            };
+            img.onerror = () => {
+                currentCrownImage = null;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#6c757d";
+                ctx.font = "16px Inter";
+                ctx.textAlign = "center";
+                ctx.fillText(
+                    "Imagem não disponível",
+                    canvas.width / 2,
+                    canvas.height / 2,
+                );
+            };
+            img.src = imageUrl;
+        }
+
+        function updatePreview() {
+            if (!currentCrownImage) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#f0f0f0";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+
+            const aspectRatio =
+                currentCrownImage.width / currentCrownImage.height;
+            let drawWidth = canvas.width;
+            let drawHeight = canvas.width / aspectRatio;
+            if (drawHeight > canvas.height) {
+                drawHeight = canvas.height;
+                drawWidth = canvas.height * aspectRatio;
+            }
+            const x = (canvas.width - drawWidth) / 2;
+            const y = (canvas.height - drawHeight) / 2;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(currentCrownImage, x, y, drawWidth, drawHeight);
+
+            const message = finalMessageTextarea.value.trim();
+            if (message) {
+                const padding = 15;
+                const fontSize = 16;
+                ctx.font = `bold ${fontSize}px Inter`;
+                ctx.textAlign = "center";
+                const textWidth = ctx.measureText(message).width;
+
+                ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+                ctx.fillRect(
+                    (canvas.width - textWidth - padding * 2) / 2,
+                    canvas.height - 60,
+                    textWidth + padding * 2,
+                    fontSize + padding,
+                );
+
+                ctx.fillStyle = "white";
+                ctx.fillText(message, canvas.width / 2, canvas.height - 42);
+            }
+        }
+
+        function resetModalState() {
+            allSteps.forEach((s) => (s.style.display = "none"));
+            initialStep.style.display = "block";
+
+            finalMessageTextarea.value = "";
+            customMessageInput.value = "";
+            autoGrow(customMessageInput);
+
+            empresaLacuna.value = "";
+            empresaLacuna.style.display = "none";
+            empresaRadios.forEach((r) => {
+                r.checked = false;
+            });
+
+            document
+                .querySelectorAll(".btn-suggestion.active")
+                .forEach((b) => b.classList.remove("active"));
+            updatePreview();
+        }
+
+        // --- EVENT LISTENERS ---
+
+        // Preencher o modal ao clicar em "Personalizar"
+        document.querySelectorAll(".btn-customize").forEach((button) => {
+            button.addEventListener("click", function () {
+                document.getElementById("crownId").value = this.dataset.crownId;
+                document.getElementById("headerCrownName").textContent =
+                    this.dataset.crownName;
+                document.getElementById("headerCrownPrice").textContent =
+                    `R$ ${parseFloat(this.dataset.crownPrice).toFixed(2)}`;
+
+                loadCrownImage(this.dataset.crownImage, updatePreview);
+                customizeModal.show();
+            });
+        });
+
+        // Navegação entre os passos
+        document.querySelectorAll(".suggestion-step-btn").forEach((button) => {
+            button.addEventListener("click", function () {
+                const stepToShow = this.dataset.step;
+                initialStep.style.display = "none";
+                if (stepToShow === "familiar")
+                    familiarStep.style.display = "block";
+                if (stepToShow === "empresarial")
+                    empresarialStep.style.display = "block";
+                if (stepToShow === "personalizada") {
+                    personalizadaStep.style.display = "block";
+                    customMessageInput.focus();
+                }
+            });
+        });
+
+        // Botões "Voltar"
+        document.querySelectorAll(".btn-back").forEach((button) => {
+            button.addEventListener("click", resetModalState);
+        });
+
+        // Resetar o modal completamente ao fechar
+        customizeModalEl.addEventListener("hidden.bs.modal", resetModalState);
+
+        // Lógica para sugestões de Familiares
+        document
+            .querySelectorAll("#messageFamiliarStep .btn-suggestion")
+            .forEach((button) => {
+                button.addEventListener("click", function () {
+                    finalMessageTextarea.value = this.textContent.trim();
+                    updatePreview();
+                    document
+                        .querySelectorAll(
+                            "#messageFamiliarStep .btn-suggestion",
+                        )
+                        .forEach((b) => b.classList.remove("active"));
+                    this.classList.add("active");
+                });
+            });
+
+        // Lógica para sugestões Empresariais
+        function updateEmpresarialMessage() {
+            const selectedRadio = document.querySelector(
+                'input[name="empresaRadio"]:checked',
+            );
+            finalMessageTextarea.value = selectedRadio
+                ? selectedRadio.value + empresaLacuna.value
+                : "";
+            updatePreview();
+        }
+
+        empresaRadios.forEach((radio) =>
+            radio.addEventListener("change", () => {
+                empresaLacuna.style.display = "block";
+                empresaLacuna.focus();
+                updateEmpresarialMessage();
+            }),
+        );
+        empresaLacuna.addEventListener("input", updateEmpresarialMessage);
+
+        // Lógica para mensagem personalizada
+        customMessageInput.addEventListener("input", function () {
+            finalMessageTextarea.value = this.value;
+            autoGrow(this);
+            updatePreview();
         });
     });
-    
-    // Handle message input
-    customMessageInput.addEventListener('input', function() {
-        updatePreview();
-    });
-    
-    function loadCrownImage(imageUrl) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function() {
-            currentCrownImage = img;
-            updatePreview();
-        };
-        img.onerror = function() {
-            // Fallback: draw a simple rectangle
-            ctx.fillStyle = '#f8f9fa';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#dee2e6';
-            ctx.strokeRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw placeholder text
-            ctx.fillStyle = '#6c757d';
-            ctx.font = '16px Inter';
-            ctx.textAlign = 'center';
-            ctx.fillText('Imagem não disponível', canvas.width / 2, canvas.height / 2);
-            
-            updatePreview();
-        };
-        img.src = imageUrl;
-    }
-    
-    function updatePreview() {
-        if (!currentCrownImage) return;
-        
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw crown image
-        const aspectRatio = currentCrownImage.width / currentCrownImage.height;
-        let drawWidth = canvas.width;
-        let drawHeight = canvas.width / aspectRatio;
-        
-        if (drawHeight > canvas.height) {
-            drawHeight = canvas.height;
-            drawWidth = canvas.height * aspectRatio;
-        }
-        
-        const x = (canvas.width - drawWidth) / 2;
-        const y = (canvas.height - drawHeight) / 2;
-        
-        ctx.drawImage(currentCrownImage, x, y, drawWidth, drawHeight);
-        
-        // Draw message overlay
-        const message = customMessageInput.value.trim();
-        if (message) {
-            // Create semi-transparent background
-            const padding = 20;
-            const fontSize = 16;
-            ctx.font = `${fontSize}px Inter`;
-            const textWidth = ctx.measureText(message).width;
-            const textHeight = fontSize;
-            
-            const rectX = (canvas.width - textWidth - padding * 2) / 2;
-            const rectY = canvas.height - textHeight - padding * 2 - 20;
-            
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(rectX, rectY, textWidth + padding * 2, textHeight + padding * 2);
-            
-            // Draw text
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            ctx.fillText(message, canvas.width / 2, rectY + textHeight + padding);
-        }
-    }
-});
 </script>
 {% endblock %}

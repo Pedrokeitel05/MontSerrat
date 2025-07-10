@@ -1,0 +1,94 @@
+{% extends "base.html" %} {% block title %}Relatório de Pedidos - Funerária
+Montserrat{% endblock %} {% block content %}
+<div class="admin-header">
+    <div class="container">
+        <h1><i class="fas fa-chart-line me-2"></i>Relatório de Pedidos</h1>
+        <p>Consulte o histórico de pedidos por data.</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="admin-crown-card mb-4">
+        <form method="GET" action="{{ url_for('reports') }}" class="w-100">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label for="start_date" class="form-label"
+                        >Data de Início</label
+                    >
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="start_date"
+                        name="start_date"
+                        value="{{ start_date or '' }}"
+                    />
+                </div>
+                <div class="col-md-5">
+                    <label for="end_date" class="form-label">Data de Fim</label>
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="end_date"
+                        name="end_date"
+                        value="{{ end_date or '' }}"
+                    />
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-gradient">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>#ID</th>
+                        <th>Data</th>
+                        <th>Cliente</th>
+                        <th>Produto</th>
+                        <th>Status</th>
+                        <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td><strong>#{{ order.id }}</strong></td>
+                        <td>
+                            {{ order.order_date.strftime('%d/%m/%Y %H:%M') }}
+                        </td>
+                        <td>{{ order.customer_name }}</td>
+                        <td>{{ order.crown_name }}</td>
+                        <td>
+                            <span
+                                class="badge rounded-pill {% if order.status == 'pending' %} text-bg-warning {% elif order.status == 'in_progress' %} text-bg-info {% else %} text-bg-success {% endif %}"
+                            >
+                                {{ order.status.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td class="text-end fw-bold">
+                            R$ {{ "%.2f"|format(order.total_amount) }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">
+                                Nenhum pedido encontrado para o período
+                                selecionado.
+                            </p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

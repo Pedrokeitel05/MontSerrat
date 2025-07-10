@@ -94,17 +94,14 @@
     </div>
 </div>
 
-{% for crown in crowns %}
-<div class="modal fade" id="editCrownModal-{{ crown.id }}" tabindex="-1">
+<div class="modal fade" id="editCrownModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form
-                id="editCrownForm-{{ crown.id }}"
-                action="{{ url_for('edit_crown', crown_id=crown.id) }}"
-                method="POST"
-            >
+            <form id="editCrownForm" method="POST">
                 <div class="modal-header">
-                    <h5 class="modal-title">Editar Coroa: {{ crown.name }}</h5>
+                    <h5 class="modal-title" id="editCrownModalTitle">
+                        Editar Coroa
+                    </h5>
                     <button
                         type="button"
                         class="btn-close"
@@ -117,19 +114,18 @@
                             <div class="edit-modal-image-col">
                                 <h6>Imagem</h6>
                                 <img
-                                    src="{{ crown.image_url }}"
+                                    src=""
                                     alt="Imagem atual"
                                     class="img-thumbnail mb-3"
+                                    id="editImagePreview"
                                 />
-                                <label
-                                    for="imageFileEdit-{{ crown.id }}"
-                                    class="form-label"
+                                <label for="imageFileEdit" class="form-label"
                                     >Carregar nova (opcional)</label
                                 >
                                 <input
                                     class="form-control form-control-sm"
                                     type="file"
-                                    id="imageFileEdit-{{ crown.id }}"
+                                    id="imageFileEdit"
                                     accept="image/*"
                                 />
                                 <div
@@ -150,8 +146,7 @@
                             <input
                                 type="hidden"
                                 name="image_url"
-                                id="hiddenImageUrlEdit-{{ crown.id }}"
-                                value="{{ crown.image_url }}"
+                                id="hiddenImageUrlEdit"
                                 required
                             />
                             <div class="mb-3">
@@ -159,8 +154,8 @@
                                 <input
                                     type="text"
                                     name="name"
+                                    id="editCrownName"
                                     class="form-control"
-                                    value="{{ crown.name }}"
                                     required
                                 />
                             </div>
@@ -168,20 +163,19 @@
                                 <label class="form-label">Descrição</label>
                                 <textarea
                                     name="description"
+                                    id="editCrownDescription"
                                     class="form-control"
                                     rows="1"
                                     required
-                                >
-{{ crown.description }}</textarea
-                                >
+                                ></textarea>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Preço</label>
                                 <input
                                     type="text"
                                     name="price"
+                                    id="editCrownPrice"
                                     class="form-control"
-                                    value="{{ 'R$ %.2f'|format(crown.price) }}"
                                     required
                                 />
                             </div>
@@ -197,7 +191,7 @@
                         Cancelar
                     </button>
                     <button
-                        id="saveEditBtn-{{ crown.id }}"
+                        id="saveEditBtn"
                         type="submit"
                         class="btn btn-primary"
                     >
@@ -208,4 +202,3 @@
         </div>
     </div>
 </div>
-{% endfor %}

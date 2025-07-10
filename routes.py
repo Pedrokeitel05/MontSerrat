@@ -4,7 +4,7 @@ from models import Order, FlowerCrown
 from utils.receipt_generator import generate_receipt
 import os
 import stripe
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from functools import wraps
 import cloudinary.uploader
 import time
@@ -268,21 +268,30 @@ def move_crown(crown_id, direction):
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
-        return jsonify({
-            'success': False,
-            'message': str(e)
-        }), 500
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @app.route('/admin/orders')
 @login_required
 def order_management():
-    orders_pending = Order.query.filter_by(status='pending').order_by(
-        Order.order_date.desc()).all()
-    orders_in_progress = Order.query.filter_by(status='in_progress').order_by(
-        Order.order_date.desc()).all()
-    orders_delivered = Order.query.filter_by(status='delivered').order_by(
-        Order.order_date.desc()).all()
+    """
+    OTIMIZAÇÃO: Busca todos os pedidos do dia em UMA SÓ consulta
+    e depois os separa por status em Python, o que é muito mais rápido.
+    """
+    today = date.today()
+    start_of_day = datetime.combine(today, datetime.min.time())
+    end_of_day = datetime.combine(today, datetime.max.time())
+
+    todays_orders = Order.query.filter(
+        Order.order_date >= start_of_day, Order.order_date
+        <= end_of_day).order_by(Order.order_date.desc()).all()
+
+    orders_pending = [o for o in todays_orders if o.status == 'pending']
+    orders_in_progress = [
+        o for o in todays_orders if o.status == 'in_progress'
+    ]
+    orders_delivered = [o for o in todays_orders if o.status == 'delivered']
+
     return render_template('orders.html',
                            pending=orders_pending,
                            in_progress=orders_in_progress,
@@ -305,7 +314,34 @@ def update_order_status(order_id):
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({
-            'success': False,
-            'message': str(e)
-        }), 500
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/admin/reports')
+@login_required
+def reports():
+    """
+    OTIMIZAÇÃO: A página agora carrega vazia. A consulta ao banco de dados
+    só é executada DEPOIS que o utilizador clica em "Filtrar".
+    """
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+    orders = []
+
+    # Só faz a consulta se um filtro foi submetido (verificando a presença de 'start_date' nos argumentos da URL)
+    if 'start_date' in request.args:
+        query = Order.query
+        if start_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            query = query.filter(Order.order_date >= start_date)
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str,
+                                         '%Y-%m-%d') + timedelta(days=1)
+            query = query.filter(Order.order_date < end_date)
+
+        orders = query.order_by(Order.order_date.desc()).all()
+
+    return render_template('reports.html',
+                           orders=orders,
+                           start_date=start_date_str,
+                           end_date=end_date_str)
