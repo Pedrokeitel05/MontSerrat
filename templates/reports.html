@@ -8,38 +8,73 @@ Montserrat{% endblock %} {% block content %}
 </div>
 
 <div class="container my-5">
-    <div class="admin-crown-card mb-4">
-        <form method="GET" action="{{ url_for('reports') }}" class="w-100">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-5">
-                    <label for="start_date" class="form-label"
-                        >Data de Início</label
-                    >
-                    <input
-                        type="date"
-                        class="form-control"
-                        id="start_date"
-                        name="start_date"
-                        value="{{ start_date or '' }}"
-                    />
-                </div>
-                <div class="col-md-5">
-                    <label for="end_date" class="form-label">Data de Fim</label>
-                    <input
-                        type="date"
-                        class="form-control"
-                        id="end_date"
-                        name="end_date"
-                        value="{{ end_date or '' }}"
-                    />
-                </div>
-                <div class="col-md-2 d-grid">
-                    <button type="submit" class="btn btn-gradient">
-                        <i class="fas fa-filter me-2"></i>Filtrar
-                    </button>
-                </div>
+    <div class="row g-4 mb-5">
+        <div class="col-lg-8">
+            <div class="admin-crown-card h-100 p-3">
+                <form
+                    id="filterForm"
+                    method="GET"
+                    action="{{ url_for('reports') }}"
+                    class="d-flex align-items-end gap-2 w-100"
+                >
+                    <div class="flex-grow-1">
+                        <label for="start_date" class="form-label mb-1"
+                            ><small>Data de Início</small></label
+                        >
+                        <input
+                            type="date"
+                            class="form-control form-control-sm"
+                            id="start_date"
+                            name="start_date"
+                            value="{{ start_date or '' }}"
+                        />
+                    </div>
+                    <div class="flex-grow-1">
+                        <label for="end_date" class="form-label mb-1"
+                            ><small>Data de Fim</small></label
+                        >
+                        <input
+                            type="date"
+                            class="form-control form-control-sm"
+                            id="end_date"
+                            name="end_date"
+                            value="{{ end_date or '' }}"
+                        />
+                    </div>
+                    <div class="btn-group">
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-gradient"
+                            title="Filtrar"
+                        >
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <a
+                            id="exportBtn"
+                            class="btn btn-sm btn-outline-success"
+                            href="#"
+                            title="Exportar para Excel"
+                        >
+                            <i class="fas fa-file-excel"></i>
+                        </a>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
+        <div class="col-lg-4">
+            <div
+                class="stat-card h-100 d-flex flex-column justify-content-center py-3"
+            >
+                <i class="fas fa-dollar-sign"></i>
+                <h3 class="mb-1">R$ {{ "%.2f"|format(total_revenue or 0) }}</h3>
+                <p class="mb-0">
+                    <small>
+                        {% if start_date or end_date %} Faturamento do Período
+                        {% else %} Faturamento Total {% endif %}
+                    </small>
+                </p>
+            </div>
+        </div>
     </div>
 
     <div class="table-container">
@@ -53,6 +88,7 @@ Montserrat{% endblock %} {% block content %}
                         <th>Produto</th>
                         <th>Status</th>
                         <th class="text-end">Total</th>
+                        <th class="text-center">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,19 +101,36 @@ Montserrat{% endblock %} {% block content %}
                         <td>{{ order.customer_name }}</td>
                         <td>{{ order.crown_name }}</td>
                         <td>
+                            {% set status_map = {'pending': 'Pendente',
+                            'in_progress': 'Em Andamento', 'delivered':
+                            'Entregue'} %} {% set status_class_map = {'pending':
+                            'text-bg-warning', 'in_progress': 'text-bg-info',
+                            'delivered': 'text-bg-success'} %}
                             <span
-                                class="badge rounded-pill {% if order.status == 'pending' %} text-bg-warning {% elif order.status == 'in_progress' %} text-bg-info {% else %} text-bg-success {% endif %}"
+                                class="badge rounded-pill {{ status_class_map.get(order.status, 'text-bg-secondary') }}"
                             >
-                                {{ order.status.replace('_', ' ').title() }}
+                                {{ status_map.get(order.status,
+                                order.status.title()) }}
                             </span>
                         </td>
                         <td class="text-end fw-bold">
                             R$ {{ "%.2f"|format(order.total_amount) }}
                         </td>
+                        <td class="text-center">
+                            <button
+                                class="btn btn-sm btn-icon"
+                                data-bs-toggle="modal"
+                                data-bs-target="#orderDetailsModal"
+                                data-order-id="{{ order.id }}"
+                                title="Ver Detalhes"
+                            >
+                                <i class="fas fa-receipt"></i>
+                            </button>
+                        </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="text-center py-5">
+                        <td colspan="7" class="text-center py-5">
                             <i class="fas fa-search fa-2x text-muted mb-3"></i>
                             <p class="text-muted mb-0">
                                 Nenhum pedido encontrado para o período
@@ -91,4 +144,198 @@ Montserrat{% endblock %} {% block content %}
         </div>
     </div>
 </div>
+
+<div
+    class="modal fade"
+    id="orderDetailsModal"
+    tabindex="-1"
+    aria-labelledby="orderDetailsModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailsModalLabel">
+                    Detalhes do Pedido
+                    <span
+                        id="modal-order-id"
+                        class="text-primary fw-bold"
+                    ></span>
+                </h5>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-loader" class="text-center p-5">
+                    <div
+                        class="spinner-border text-primary"
+                        role="status"
+                    ></div>
+                </div>
+                <div id="modal-content-details" style="display: none">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h6><i class="fas fa-user me-2"></i>Cliente</h6>
+                            <p class="mb-1">
+                                <strong>Nome:</strong>
+                                <span id="modal-customer-name"></span>
+                            </p>
+                            <p class="mb-1">
+                                <strong>Telefone:</strong>
+                                <span id="modal-customer-phone"></span>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Email:</strong>
+                                <span id="modal-customer-email"></span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <h6>
+                                <i class="fas fa-shopping-cart me-2"></i>Pedido
+                            </h6>
+                            <p class="mb-1">
+                                <strong>Produto:</strong>
+                                <span id="modal-crown-name"></span>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Valor Total:</strong>
+                                <span id="modal-total-amount"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <hr />
+                    <div class="mb-4">
+                        <h6><i class="fas fa-cross me-2"></i>Homenagem</h6>
+                        <p class="mb-1">
+                            <strong>Ente Querido:</strong>
+                            <span id="modal-deceased-name"></span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>Mensagem na Faixa:</strong>
+                            <span
+                                id="modal-custom-message"
+                                style="white-space: pre-wrap"
+                            ></span>
+                        </p>
+                    </div>
+                    <hr />
+                    <div>
+                        <h6>
+                            <i class="fas fa-map-marker-alt me-2"></i>Entrega
+                        </h6>
+                        <p class="mb-1">
+                            <strong>Local:</strong>
+                            <span id="modal-delivery-location"></span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>Capela:</strong>
+                            <span id="modal-chapel"></span>
+                        </p>
+                        <p class="mb-0">
+                            <strong>Abertura do Velório:</strong>
+                            <span id="modal-opening-time"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <small class="text-muted"
+                    >Pedido realizado em: <span id="modal-order-date"></span
+                ></small>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block scripts %} {{ super() }}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // ---- LÓGICA DO BOTÃO DE EXPORTAR ----
+        const exportBtn = document.getElementById('exportBtn');
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+
+        function updateExportState() {
+            const hasFilter = startDateInput.value || endDateInput.value;
+            const hasOrders = {{ 'true' if orders else 'false' }};
+
+            if (hasFilter && hasOrders) {
+                exportBtn.classList.remove('disabled');
+                exportBtn.setAttribute('aria-disabled', 'false');
+
+                const params = new URLSearchParams();
+                if (startDateInput.value) params.append('start_date', startDateInput.value);
+                if (endDateInput.value) params.append('end_date', endDateInput.value);
+                exportBtn.href = `{{ url_for('export_report') }}?${params.toString()}`;
+            } else {
+                exportBtn.classList.add('disabled');
+                exportBtn.setAttribute('aria-disabled', 'true');
+                exportBtn.href = "#";
+            }
+        }
+
+        startDateInput.addEventListener('change', updateExportState);
+        endDateInput.addEventListener('change', updateExportState);
+        updateExportState();
+
+        // --- LÓGICA EXISTENTE PARA O MODAL DE DETALHES ---
+        const detailsModal = document.getElementById("orderDetailsModal");
+        if (detailsModal) {
+            detailsModal.addEventListener("show.bs.modal", async function (event) {
+                const button = event.relatedTarget;
+                const orderId = button.dataset.orderId;
+                const loader = document.getElementById("modal-loader");
+                const content = document.getElementById("modal-content-details");
+
+                loader.style.display = "block";
+                content.style.display = "none";
+
+                try {
+                    const response = await fetch(`/admin/order/details/${orderId}`);
+                    if (!response.ok) throw new Error("Pedido não encontrado.");
+                    const data = await response.json();
+
+                    document.getElementById("modal-order-id").textContent = data.id;
+                    document.getElementById("modal-customer-name").textContent = data.customer_name;
+                    document.getElementById("modal-customer-phone").textContent = data.customer_phone;
+                    document.getElementById("modal-customer-email").textContent = data.customer_email;
+                    document.getElementById("modal-crown-name").textContent = data.crown_name;
+                    document.getElementById("modal-total-amount").textContent = data.total_amount;
+                    document.getElementById("modal-custom-message").textContent = data.custom_message;
+                    document.getElementById("modal-deceased-name").textContent = data.deceased_name;
+                    document.getElementById("modal-delivery-location").textContent = data.delivery_location;
+                    document.getElementById("modal-chapel").textContent = data.chapel;
+                    document.getElementById("modal-opening-time").textContent = data.opening_time;
+                    document.getElementById("modal-order-date").textContent = data.order_date;
+
+                    loader.style.display = "none";
+                    content.style.display = "block";
+                } catch (error) {
+                    loader.innerHTML = `<p class="text-danger">${error.message}</p>`;
+                }
+            });
+        }
+    });
+</script>
+<style>
+    .btn-icon {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        padding: 0.25rem 0.5rem;
+    }
+    .btn-icon:hover {
+        color: var(--text-primary);
+    }
+</style>
 {% endblock %}

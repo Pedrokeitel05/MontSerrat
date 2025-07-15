@@ -1540,9 +1540,9 @@ footer a:hover {
 }
 
 .edit-modal-image-col .img-thumbnail {
-    width: 100%;
-    height: auto;
-    max-height: 200px;
+    width: 200%;
+    height: 250px;
+    max-height: 250px;
     /* Limita a altura da imagem para não esticar o modal */
     object-fit: cover;
     background-color: transparent;
@@ -1835,7 +1835,7 @@ body {
 }
 
 .modal-backdrop {
-    background-color: rgba(15, 15, 15, 0.3);
+    background-color: rgba(15, 15, 15, 0.6);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
@@ -1873,10 +1873,10 @@ body {
 .edit-modal-image-col .img-thumbnail {
     width: 100%;
     height: auto;
-    max-height: 200px;
-    object-fit: cover;
+    max-height: 280px;
+    object-fit: contain;
     background-color: transparent;
-    border-color: var(--border-color);
+    border-color: 1px solid var(--border-color);
 }
 
 .edit-modal-image-col .form-label {
@@ -2302,9 +2302,7 @@ body {
     /* --- AJUSTES NO CONTEÚDO DA PÁGINA INICIAL --- */
 
     /* Garante que o texto da secção principal fique centralizado */
-    .hero-section {
-        text-align: center;
-    }
+    .hero-section {}
 
     /* Reduz um pouco o tamanho do título "Coroas de Flores" */
     .hero-section h1 {
@@ -2533,4 +2531,320 @@ body {
     font-weight: 400;
     line-height: 1;
     /* Para um visual mais compacto */
+}
+
+/* static/css/style.css */
+
+/* ================================================================= */
+/* AJUSTES DE RESPONSIVIDADE PARA O MODAL DE PERSONALIZAÇÃO (MOBILE) */
+/* ================================================================= */
+
+@media (max-width: 768px) {
+
+    /* 1. Reduz o espaçamento interno do corpo do modal para dar mais espaço */
+    .modal-dialog .modal-body {
+        padding: 1.5rem 1rem;
+    }
+
+    /* 2. Garante que a coluna de opções fique abaixo da imagem e adiciona um espaço */
+    #customizeModal .col-md-6:last-child {
+        margin-top: 2rem;
+    }
+
+    /* 3. Reduz o tamanho da pré-visualização para não ocupar tanto espaço vertical */
+    .preview-container canvas {
+        max-height: 200px;
+    }
+
+    /* 4. Ajusta o tamanho e espaçamento dos cards de opção de mensagem */
+    .message-option-card {
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .message-option-card .icon {
+        font-size: 1.2rem;
+        margin-right: 1rem;
+    }
+
+    .message-option-card .text h6 {
+        font-size: 0.95rem;
+    }
+
+    .message-option-card .text p {
+        font-size: 0.8rem;
+    }
+
+    /* 5. Ajusta o rodapé do modal para que os botões fiquem bem alinhados */
+    .modal-footer {
+        padding: 1rem;
+        flex-wrap: nowrap;
+        /* Impede que os botões quebrem a linha */
+        justify-content: flex-end;
+        /* Alinha à direita */
+    }
+}
+
+/* static/css/style.css */
+
+/* ================================================================= */
+/* AJUSTES DE RESPONSIVIDADE PARA O HERO SECTION (MOBILE)            */
+/* ================================================================= */
+
+@media (max-width: 768px) {
+
+    /* Diminui a altura mínima da secção para um visual mais compacto */
+    .hero-section {
+        min-height: auto;
+        padding: 2rem 0;
+        text-align: left;
+        /* Adiciona um espaçamento vertical */
+    }
+
+    /* Reduz drasticamente o tamanho do título principal */
+    .hero-section h1 {
+        font-size: 1.5rem;
+        /* Tamanho bem menor para caber */
+        margin-bottom: 0.75rem !important;
+        /* Diminui o espaço abaixo do título */
+    }
+
+    /* Reduz o tamanho do parágrafo de texto */
+    .hero-section .lead {
+        font-size: 0.8rem;
+        /* Texto de apoio menor */
+        line-height: 1.4;
+        /* Melhora a leitura */
+        margin-bottom: 1rem !important;
+        /* Diminui o espaço abaixo */
+    }
+
+    /* Ajusta o último item ("Feitas com amor...") */
+    .hero-section .hero-feature {
+        font-size: 0.75rem;
+    }
+
+    .hero-section .hero-feature i {
+        font-size: 0.8rem;
+    }
+
+    /* Ajusta o padding da linha do grid para economizar espaço */
+    .hero-section .row {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        align-items: center;
+    }
+}
+
+/* static/css/style.css */
+
+/* ================================================================= */
+/* AJUSTE FINO DO MODAL DE EDIÇÃO PARA TAMANHO UNIFORME      */
+/* ================================================================= */
+
+/* 1. Define uma largura máxima um pouco menor para o modal de edição */
+#editCrownModal .modal-dialog {
+    max-width: 720px;
+    /* Um pouco menor que os 800px do .modal-lg padrão */
+}
+
+/* 2. Reduz ligeiramente o tamanho das etiquetas (label) e sua margem */
+#editCrownModal .form-label {
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+}
+
+/* 3. Reduz o tamanho da fonte e o espaçamento interno dos campos do formulário */
+#editCrownModal .form-control {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    /* Menos padding vertical e horizontal */
+}
+
+/* 4. Ajusta também o título da coluna da imagem */
+#editCrownModal .edit-modal-image-col h6 {
+    font-size: 0.9rem;
+}
+
+/* static/css/style.css */
+
+/* ================================================================= */
+/* ESTILOS PARA O COMPONENTE DE UPLOAD PERSONALIZADO                 */
+/* ================================================================= */
+
+.custom-file-upload {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+/* Esconde o input de ficheiro padrão */
+.custom-file-upload input[type="file"] {
+    display: none;
+}
+
+/* Estiliza o label para parecer um botão */
+.custom-file-upload .custom-file-label {
+    display: flex;
+    /* Alinha o ícone e o texto */
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-file-upload .custom-file-label:hover {
+    background-color: var(--bg-primary);
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+}
+
+/* Ajusta a mini barra de progresso */
+.modal .progress {
+    height: 10px;
+    /* Altura da barra */
+    background-color: var(--bg-tertiary);
+}
+
+.modal .progress-bar {
+    background: var(--gradient-primary);
+    /* Usa o gradiente do tema */
+    font-size: 0.6rem;
+    line-height: 10px;
+}
+
+/* ================================================================= */
+/* FIX URGENTE: FORÇAR LAYOUT DE DUAS COLUNAS NO MODAL DE EDIÇÃO     */
+/* ================================================================= */
+
+#editCrownModal .modal-body .row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* ================================================================= */
+/* FIX DEFINITIVO PARA O LAYOUT DO MODAL DE EDIÇÃO               */
+/* ================================================================= */
+
+/* 1. Garante que o container da linha seja um flex container */
+#editCrownModal .modal-body .row {
+    display: flex !important;
+    /* Força o display flex */
+    flex-wrap: nowrap !important;
+    /* Impede que as colunas quebrem a linha */
+    gap: 2rem;
+}
+
+/* 2. Força a largura correta para cada coluna DENTRO deste modal */
+#editCrownModal .modal-body .col-md-5 {
+    width: 40% !important;
+    /* Força a coluna da esquerda a ter 40% da largura */
+    flex: none !important;
+    /* Desativa outras propriedades flex que possam interferir */
+}
+
+#editCrownModal .modal-body .col-md-7 {
+    width: 60% !important;
+    /* Força a coluna da direita a ter 60% da largura */
+    flex: none !important;
+}
+
+/* ============================================================= */
+/* LAYOUT COM CSS GRID PARA O MODAL DE EDIÇÃO (SOLUÇÃO FINAL)  */
+/* ============================================================= */
+
+.edit-modal-grid-container {
+    display: grid;
+    /* Define 2 colunas: a 1ª com 40% da largura, a 2ª com o resto (1fr) */
+    grid-template-columns: 40% 1fr;
+    /* Adiciona um espaço de 2rem entre as colunas */
+    gap: 2rem;
+    /* Alinha o conteúdo de ambas as colunas ao centro na vertical */
+    align-items: center;
+}
+
+/* ================================================================= */
+/* AJUSTES DE RESPONSIVIDADE PARA O PAINEL DE ADMIN COMPLETO (MOBILE) */
+/* ================================================================= */
+
+@media (max-width: 768px) {
+
+    /* Ajusta o cabeçalho "Gerenciar Coroas" e botão */
+    .container .d-flex.justify-content-between h3 {
+        font-size: 1.25rem;
+    }
+
+    /* --- MUDANÇA AQUI: Força os cards de estatísticas a ficarem em 3 colunas --- */
+    .admin-stats {
+        grid-template-columns: 1fr 1fr 1fr;
+        /* 3 colunas de largura igual */
+        gap: 0.75rem;
+        /* Diminui ainda mais o espaço entre os cards */
+    }
+
+    /* --- MUDANÇA AQUI: Diminui ainda mais o tamanho interno dos cards --- */
+    .stat-card {
+        padding: 0.75rem;
+        text-align: center;
+    }
+
+    .stat-card i {
+        font-size: 1.5rem;
+        /* Ícone menor */
+        margin-bottom: 0.4rem;
+    }
+
+    .stat-card h3 {
+        font-size: 1.3rem;
+        /* Número menor */
+    }
+
+    .stat-card p {
+        font-size: 0.65rem;
+        /* Texto menor */
+        line-height: 1.2;
+    }
+
+    /* --- AJUSTES PARA A LISTA DE COROAS (EXISTENTES) --- */
+
+    /* Deixa o card da coroa mais compacto */
+    .admin-crown-card {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    /* Diminui a imagem da coroa */
+    .crown-card-img {
+        width: 60px;
+        height: 60px;
+    }
+
+    /* Ajusta as fontes do nome e preço */
+    .crown-card-name {
+        font-size: 1rem;
+    }
+
+    .crown-card-price {
+        font-size: 0.95rem;
+    }
+
+    /* Esconde a descrição no telemóvel para um visual mais limpo */
+    .crown-card-desc {
+        display: none;
+    }
+
+    /* Deixa os ícones de ação menores e mais próximos */
+    .crown-card-actions {
+        gap: 0.8rem;
+    }
+
+    .crown-card-actions .action-icon {
+        font-size: 1rem;
+    }
 }

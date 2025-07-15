@@ -52,24 +52,28 @@
                         />
                     </div>
                     <div class="mb-3">
-                        <label for="imageFileAdd" class="form-label"
-                            >Imagem da Coroa</label
+                        <label class="form-label">Imagem da Coroa</label>
+                        <div class="custom-file-upload">
+                            <label for="imageFileAdd" class="custom-file-label">
+                                <i class="fas fa-upload me-2"></i>
+                                <span>Escolher ficheiro</span>
+                            </label>
+                            <input
+                                type="file"
+                                id="imageFileAdd"
+                                accept="image/*"
+                                required
+                            />
+                        </div>
+                        <div
+                            class="progress mt-2"
+                            style="display: none; height: 10px"
                         >
-                        <input
-                            class="form-control"
-                            type="file"
-                            id="imageFileAdd"
-                            accept="image/*"
-                            required
-                        />
-                        <div class="progress mt-2" style="display: none">
                             <div
                                 class="progress-bar"
                                 role="progressbar"
                                 style="width: 0%"
-                            >
-                                0%
-                            </div>
+                            ></div>
                         </div>
                     </div>
                 </div>
@@ -109,40 +113,45 @@
                     ></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row g-4">
-                        <div class="col-md-5">
-                            <div class="edit-modal-image-col">
-                                <h6>Imagem</h6>
-                                <img
-                                    src=""
-                                    alt="Imagem atual"
-                                    class="img-thumbnail mb-3"
-                                    id="editImagePreview"
-                                />
-                                <label for="imageFileEdit" class="form-label"
-                                    >Carregar nova (opcional)</label
+                    <div class="edit-modal-grid-container">
+                        <div class="edit-modal-image-col">
+                            <h6>Imagem</h6>
+                            <img
+                                src=""
+                                alt="Imagem atual"
+                                class="img-thumbnail mb-3"
+                                id="editImagePreview"
+                            />
+                            <label class="form-label"
+                                >Carregar nova (opcional)</label
+                            >
+                            <div class="custom-file-upload">
+                                <label
+                                    for="imageFileEdit"
+                                    class="custom-file-label"
                                 >
+                                    <i class="fas fa-upload me-2"></i>
+                                    <span>Escolher ficheiro</span>
+                                </label>
                                 <input
-                                    class="form-control form-control-sm"
                                     type="file"
                                     id="imageFileEdit"
                                     accept="image/*"
                                 />
+                            </div>
+                            <div
+                                class="progress mt-2"
+                                style="display: none; height: 10px"
+                            >
                                 <div
-                                    class="progress mt-2"
-                                    style="display: none"
-                                >
-                                    <div
-                                        class="progress-bar"
-                                        role="progressbar"
-                                        style="width: 0%"
-                                    >
-                                        0%
-                                    </div>
-                                </div>
+                                    class="progress-bar"
+                                    role="progressbar"
+                                    style="width: 0%"
+                                ></div>
                             </div>
                         </div>
-                        <div class="col-md-7">
+
+                        <div class="edit-modal-form-col">
                             <input
                                 type="hidden"
                                 name="image_url"

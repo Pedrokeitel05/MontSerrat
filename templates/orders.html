@@ -1,9 +1,15 @@
 {% extends "base.html" %} {% block title %}Gestor de Pedidos{% endblock %} {%
 block content %}
+<audio
+    id="notification-sound"
+    src="{{ url_for('static', filename='audio/notification.mp3') }}"
+    preload="auto"
+></audio>
+
 <div class="admin-header">
     <div class="container">
         <h1><i class="fas fa-tasks me-2"></i>Gestor de Pedidos</h1>
-        <p>Arraste e solte os pedidos para atualizar o status.</p>
+        <p>Arraste e solte os pedidos ou use o menu para atualizar o status.</p>
     </div>
 </div>
 
@@ -20,21 +26,72 @@ block content %}
                     draggable="true"
                     data-order-id="{{ order.id }}"
                 >
-                    <div class="card-customer">{{ order.customer_name }}</div>
-                    <div class="card-product">{{ order.crown_name }}</div>
-                    <div class="card-footer">
+                    <div
+                        class="d-flex justify-content-between align-items-start"
+                    >
+                        <div>
+                            <div class="card-customer">
+                                {{ order.customer_name }}
+                            </div>
+                            <div class="card-product">
+                                {{ order.crown_name }}
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button
+                                class="btn btn-sm btn-icon"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-view-details"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#orderDetailsModal"
+                                        data-order-id="{{ order.id }}"
+                                    >
+                                        <i class="fas fa-eye me-2"></i>Ver
+                                        Detalhes
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-change-status"
+                                        data-next-status="in_progress"
+                                    >
+                                        <i class="fas fa-arrow-right me-2"></i
+                                        >Avançar Etapa
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-cancel-order text-danger"
+                                        data-order-id="{{ order.id }}"
+                                    >
+                                        <i class="fas fa-trash-alt me-2"></i
+                                        >Cancelar Pedido
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-footer mt-3">
                         <small
                             >{{ order.order_date.strftime('%d/%m/%Y %H:%M')
                             }}</small
                         >
-                        <a
-                            href="https://api.whatsapp.com/send?phone={{ order.customer_phone }}&text=Olá, {{ order.customer_name }}! Sobre o seu pedido #{{ order.id }}..."
-                            target="_blank"
-                            class="whatsapp-icon"
-                            title="Contatar no WhatsApp"
+                        <div
+                            class="order-timer"
+                            data-order-date="{{ order.order_date.isoformat() }}"
                         >
-                            <i class="fab fa-whatsapp"></i>
-                        </a>
+                            <i class="fas fa-clock"></i> <span>--:--:--</span>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -53,21 +110,81 @@ block content %}
                     draggable="true"
                     data-order-id="{{ order.id }}"
                 >
-                    <div class="card-customer">{{ order.customer_name }}</div>
-                    <div class="card-product">{{ order.crown_name }}</div>
-                    <div class="card-footer">
+                    <div
+                        class="d-flex justify-content-between align-items-start"
+                    >
+                        <div>
+                            <div class="card-customer">
+                                {{ order.customer_name }}
+                            </div>
+                            <div class="card-product">
+                                {{ order.crown_name }}
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button
+                                class="btn btn-sm btn-icon"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-view-details"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#orderDetailsModal"
+                                        data-order-id="{{ order.id }}"
+                                    >
+                                        <i class="fas fa-eye me-2"></i>Ver
+                                        Detalhes
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-change-status"
+                                        data-next-status="pending"
+                                    >
+                                        <i class="fas fa-arrow-left me-2"></i
+                                        >Retroceder Etapa
+                                    </button>
+                                </li>
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-change-status"
+                                        data-next-status="delivered"
+                                    >
+                                        <i class="fas fa-arrow-right me-2"></i
+                                        >Avançar Etapa
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-cancel-order text-danger"
+                                        data-order-id="{{ order.id }}"
+                                    >
+                                        <i class="fas fa-trash-alt me-2"></i
+                                        >Cancelar Pedido
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-footer mt-3">
                         <small
                             >{{ order.order_date.strftime('%d/%m/%Y %H:%M')
                             }}</small
                         >
-                        <a
-                            href="https://api.whatsapp.com/send?phone={{ order.customer_phone }}"
-                            target="_blank"
-                            class="whatsapp-icon"
-                            title="Contatar no WhatsApp"
+                        <div
+                            class="order-timer"
+                            data-order-date="{{ order.order_date.isoformat() }}"
                         >
-                            <i class="fab fa-whatsapp"></i>
-                        </a>
+                            <i class="fas fa-clock"></i> <span>--:--:--</span>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -86,21 +203,70 @@ block content %}
                     draggable="true"
                     data-order-id="{{ order.id }}"
                 >
-                    <div class="card-customer">{{ order.customer_name }}</div>
-                    <div class="card-product">{{ order.crown_name }}</div>
-                    <div class="card-footer">
+                    <div
+                        class="d-flex justify-content-between align-items-start"
+                    >
+                        <div>
+                            <div class="card-customer">
+                                {{ order.customer_name }}
+                            </div>
+                            <div class="card-product">
+                                {{ order.crown_name }}
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button
+                                class="btn btn-sm btn-icon"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-view-details"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#orderDetailsModal"
+                                        data-order-id="{{ order.id }}"
+                                    >
+                                        <i class="fas fa-eye me-2"></i>Ver
+                                        Detalhes
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-change-status"
+                                        data-next-status="in_progress"
+                                    >
+                                        <i class="fas fa-arrow-left me-2"></i
+                                        >Retroceder Etapa
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <button
+                                        class="dropdown-item btn-cancel-order text-danger"
+                                        data-order-id="{{ order.id }}"
+                                    >
+                                        <i class="fas fa-trash-alt me-2"></i
+                                        >Cancelar Pedido
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-footer mt-3">
                         <small
                             >{{ order.order_date.strftime('%d/%m/%Y %H:%M')
                             }}</small
                         >
-                        <a
-                            href="https://api.whatsapp.com/send?phone={{ order.customer_phone }}"
-                            target="_blank"
-                            class="whatsapp-icon"
-                            title="Contatar no WhatsApp"
-                        >
-                            <i class="fab fa-whatsapp"></i>
-                        </a>
+                        <div class="order-timer final-status">
+                            <i class="fas fa-check-double"></i>
+                            <span>Concluído</span>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -108,13 +274,200 @@ block content %}
         </div>
     </div>
 </div>
+
+<div
+    class="modal fade"
+    id="orderDetailsModal"
+    tabindex="-1"
+    aria-labelledby="orderDetailsModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailsModalLabel">
+                    Detalhes do Pedido
+                    <span
+                        id="modal-order-id"
+                        class="text-primary fw-bold"
+                    ></span>
+                </h5>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-loader" class="text-center p-5">
+                    <div
+                        class="spinner-border text-primary"
+                        role="status"
+                    ></div>
+                </div>
+                <div id="modal-content-details" style="display: none">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h6><i class="fas fa-user me-2"></i>Cliente</h6>
+                            <p class="mb-1">
+                                <strong>Nome:</strong>
+                                <span id="modal-customer-name"></span>
+                            </p>
+                            <p class="mb-1">
+                                <strong>Telefone:</strong>
+                                <span id="modal-customer-phone"></span>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Email:</strong>
+                                <span id="modal-customer-email"></span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <h6>
+                                <i class="fas fa-shopping-cart me-2"></i>Pedido
+                            </h6>
+                            <p class="mb-1">
+                                <strong>Produto:</strong>
+                                <span id="modal-crown-name"></span>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Valor Total:</strong>
+                                <span id="modal-total-amount"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <hr />
+                    <div class="mb-4">
+                        <h6><i class="fas fa-cross me-2"></i>Homenagem</h6>
+                        <p class="mb-1">
+                            <strong>Ente Querido:</strong>
+                            <span id="modal-deceased-name"></span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>Mensagem na Faixa:</strong>
+                            <span
+                                id="modal-custom-message"
+                                style="white-space: pre-wrap"
+                            ></span>
+                        </p>
+                    </div>
+                    <hr />
+                    <div>
+                        <h6>
+                            <i class="fas fa-map-marker-alt me-2"></i>Entrega
+                        </h6>
+                        <p class="mb-1">
+                            <strong>Local:</strong>
+                            <span id="modal-delivery-location"></span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>Capela:</strong>
+                            <span id="modal-chapel"></span>
+                        </p>
+                        <p class="mb-0">
+                            <strong>Abertura do Velório:</strong>
+                            <span id="modal-opening-time"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <small class="text-muted"
+                    >Pedido realizado em: <span id="modal-order-date"></span
+                ></small>
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %} {% block scripts %} {{ super() }}
 <script>
-    // Script para o "arrastar e soltar" (drag and drop)
     document.addEventListener("DOMContentLoaded", function () {
-        const cards = document.querySelectorAll(".order-card");
-        const columns = document.querySelectorAll(".order-column");
+        const notificationSound = document.getElementById("notification-sound");
+        let audioUnlocked = false;
 
+        // --- LÓGICA PARA DESBLOQUEAR O ÁUDIO ---
+        function unlockAudio() {
+            if (!audioUnlocked) {
+                notificationSound.volume = 0;
+                notificationSound.play().catch(() => {});
+                notificationSound.pause();
+                notificationSound.currentTime = 0;
+                notificationSound.volume = 1;
+                audioUnlocked = true;
+                document.body.removeEventListener("click", unlockAudio);
+            }
+        }
+        document.body.addEventListener("click", unlockAudio);
+
+        // --- LÓGICA DE ATUALIZAÇÃO AUTOMÁTICA ---
+        async function checkForNewOrders() {
+            const allPendingCards = document.querySelectorAll(
+                "#pending .order-card",
+            );
+            let latestId = 0;
+            if (allPendingCards.length > 0) {
+                const ids = Array.from(allPendingCards).map((c) =>
+                    parseInt(c.dataset.orderId, 10),
+                );
+                latestId = Math.max(...ids);
+            }
+
+            try {
+                const response = await fetch(
+                    `/api/new-orders?latest_id=${latestId}`,
+                );
+                if (!response.ok) return;
+                const newOrders = await response.json();
+
+                if (newOrders.length > 0) {
+                    if (audioUnlocked) {
+                        notificationSound.play();
+                    }
+                    // Recarrega a página para garantir que tudo seja atualizado de forma simples e robusta.
+                    location.reload();
+                }
+            } catch (error) {
+                console.error("Erro ao verificar novos pedidos:", error);
+            }
+        }
+        setInterval(checkForNewOrders, 15000);
+
+        // --- LÓGICA UNIFICADA PARA MUDANÇA DE STATUS ---
+        async function changeOrderStatus(orderId, newStatus) {
+            try {
+                const response = await fetch(
+                    `/admin/order/update_status/${orderId}`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ status: newStatus }),
+                    },
+                );
+                const result = await response.json();
+                if (result.success) {
+                    showToast("Status do pedido atualizado!", "success");
+                    location.reload();
+                } else {
+                    showToast(
+                        result.message || "Erro ao atualizar status.",
+                        "danger",
+                    );
+                }
+            } catch (error) {
+                showToast("Erro de comunicação.", "danger");
+            }
+        }
+
+        // --- LÓGICA DO DRAG AND DROP (PARA DESKTOP) ---
+        const cards = document.querySelectorAll(".order-card");
         let draggedCard = null;
 
         cards.forEach((card) => {
@@ -123,50 +476,30 @@ block content %}
                 setTimeout(() => card.classList.add("dragging"), 0);
             });
             card.addEventListener("dragend", () => {
-                draggedCard.classList.remove("dragging");
+                if (draggedCard) draggedCard.classList.remove("dragging");
                 draggedCard = null;
             });
         });
 
-        columns.forEach((column) => {
+        document.querySelectorAll(".order-column").forEach((column) => {
             column.addEventListener("dragover", (e) => {
                 e.preventDefault();
                 const afterElement = getDragAfterElement(column, e.clientY);
                 const columnBody = column.querySelector(".column-body");
                 if (afterElement == null) {
-                    columnBody.appendChild(draggedCard);
+                    if (draggedCard) columnBody.appendChild(draggedCard);
                 } else {
-                    columnBody.insertBefore(draggedCard, afterElement);
+                    if (draggedCard)
+                        columnBody.insertBefore(draggedCard, afterElement);
                 }
             });
 
-            column.addEventListener("drop", async (e) => {
+            column.addEventListener("drop", (e) => {
                 e.preventDefault();
+                if (!draggedCard) return;
                 const newStatus = column.dataset.status;
                 const orderId = draggedCard.dataset.orderId;
-
-                // Atualiza o status no servidor
-                try {
-                    const response = await fetch(
-                        `/admin/order/update_status/${orderId}`,
-                        {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ status: newStatus }),
-                        },
-                    );
-                    const result = await response.json();
-                    if (result.success) {
-                        showToast("Status do pedido atualizado!", "success");
-                    } else {
-                        showToast(
-                            result.message || "Erro ao atualizar status.",
-                            "danger",
-                        );
-                    }
-                } catch (error) {
-                    showToast("Erro de comunicação.", "danger");
-                }
+                changeOrderStatus(orderId, newStatus);
             });
         });
 
@@ -187,6 +520,195 @@ block content %}
                 { offset: Number.NEGATIVE_INFINITY },
             ).element;
         }
+
+        // --- LÓGICA PARA OS BOTÕES DO MENU (AVANÇAR/RETROCEDER) ---
+        document.querySelectorAll(".btn-change-status").forEach((button) => {
+            button.addEventListener("click", function (e) {
+                e.stopPropagation();
+                const card = this.closest(".order-card");
+                const orderId = card.dataset.orderId;
+                const nextStatus = this.dataset.nextStatus;
+                changeOrderStatus(orderId, nextStatus);
+            });
+        });
+
+        // --- LÓGICA DO MODAL, CANCELAMENTO E CRONÓMETRO ---
+        const detailsModal = document.getElementById("orderDetailsModal");
+        if (detailsModal) {
+            detailsModal.addEventListener(
+                "show.bs.modal",
+                async function (event) {
+                    const button = event.relatedTarget;
+                    const orderId = button.dataset.orderId;
+                    const loader = document.getElementById("modal-loader");
+                    const content = document.getElementById(
+                        "modal-content-details",
+                    );
+
+                    loader.style.display = "block";
+                    content.style.display = "none";
+
+                    try {
+                        const response = await fetch(
+                            `/admin/order/details/${orderId}`,
+                        );
+                        if (!response.ok)
+                            throw new Error("Pedido não encontrado.");
+                        const data = await response.json();
+
+                        document.getElementById("modal-order-id").textContent =
+                            data.id;
+                        document.getElementById(
+                            "modal-customer-name",
+                        ).textContent = data.customer_name;
+                        document.getElementById(
+                            "modal-customer-phone",
+                        ).textContent = data.customer_phone;
+                        document.getElementById(
+                            "modal-customer-email",
+                        ).textContent = data.customer_email;
+                        document.getElementById(
+                            "modal-crown-name",
+                        ).textContent = data.crown_name;
+                        document.getElementById(
+                            "modal-total-amount",
+                        ).textContent = data.total_amount;
+                        document.getElementById(
+                            "modal-custom-message",
+                        ).textContent = data.custom_message;
+                        document.getElementById(
+                            "modal-deceased-name",
+                        ).textContent = data.deceased_name;
+                        document.getElementById(
+                            "modal-delivery-location",
+                        ).textContent = data.delivery_location;
+                        document.getElementById("modal-chapel").textContent =
+                            data.chapel;
+                        document.getElementById(
+                            "modal-opening-time",
+                        ).textContent = data.opening_time;
+                        document.getElementById(
+                            "modal-order-date",
+                        ).textContent = data.order_date;
+
+                        loader.style.display = "none";
+                        content.style.display = "block";
+                    } catch (error) {
+                        loader.innerHTML = `<p class="text-danger">${error.message}</p>`;
+                    }
+                },
+            );
+        }
+
+        document.querySelectorAll(".btn-cancel-order").forEach((button) => {
+            button.addEventListener("click", async function (e) {
+                e.stopPropagation();
+                const orderId = this.dataset.orderId;
+
+                if (
+                    confirm(
+                        `Tem a certeza que quer cancelar o Pedido #${orderId}? Esta ação não pode ser desfeita.`,
+                    )
+                ) {
+                    try {
+                        const response = await fetch(
+                            `/admin/order/delete/${orderId}`,
+                            { method: "POST" },
+                        );
+                        const result = await response.json();
+
+                        if (result.success) {
+                            showToast(result.message, "success");
+                            const cardToRemove = document.querySelector(
+                                `.order-card[data-order-id='${orderId}']`,
+                            );
+                            if (cardToRemove) cardToRemove.remove();
+                        } else {
+                            showToast(result.message, "danger");
+                        }
+                    } catch (error) {
+                        showToast(
+                            "Erro de comunicação ao cancelar pedido.",
+                            "danger",
+                        );
+                    }
+                }
+            });
+        });
+
+        function updateTimers() {
+            document
+                .querySelectorAll(".order-timer:not(.final-status)")
+                .forEach((timerEl) => {
+                    const orderDateStr = timerEl.dataset.orderDate;
+                    if (!orderDateStr) return;
+                    const orderTime = new Date(orderDateStr).getTime();
+                    const deadline = orderTime + 90 * 60 * 1000;
+                    const now = new Date().getTime();
+                    const distance = deadline - now;
+                    const timerSpan = timerEl.querySelector("span");
+                    if (!timerSpan) return;
+
+                    if (distance < 0) {
+                        timerSpan.textContent = "Atrasado";
+                        timerEl.style.color = "var(--error-color)";
+                        return;
+                    }
+
+                    const hours = Math.floor(distance / (1000 * 60 * 60));
+                    const minutes = Math.floor(
+                        (distance % (1000 * 60 * 60)) / (1000 * 60),
+                    );
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    timerSpan.textContent =
+                        (hours < 10 ? "0" : "") +
+                        hours +
+                        ":" +
+                        (minutes < 10 ? "0" : "") +
+                        minutes +
+                        ":" +
+                        (seconds < 10 ? "0" : "") +
+                        seconds;
+
+                    if (distance < 15 * 60 * 1000) {
+                        timerEl.style.color = "var(--warning-color)";
+                    } else {
+                        timerEl.style.color = "var(--success-color)";
+                    }
+                });
+        }
+
+        setInterval(updateTimers, 1000);
+        updateTimers();
     });
 </script>
+
+<style>
+    .btn-icon {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        padding: 0.25rem 0.5rem;
+    }
+    .btn-icon:hover {
+        color: var(--text-primary);
+    }
+    .order-card .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    .order-timer {
+        font-weight: 600;
+        color: var(--success-color);
+    }
+    .order-timer.final-status {
+        color: var(--text-muted);
+    }
+</style>
 {% endblock %}

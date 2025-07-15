@@ -1,18 +1,16 @@
-{% extends "base.html" %}
-
-{% block title %}Pedido Confirmado - Funerária Montserrat{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Pedido Confirmado - Funerária
+Montserrat{% endblock %} {% block content %}
 <div class="success-container">
     <div class="success-icon">
         <i class="fas fa-check-circle"></i>
     </div>
-    
+
     <h1>Pedido Confirmado!</h1>
     <p class="lead">
-        Obrigado, {{ order.customer_name }}! Seu pedido foi processado com sucesso.
+        Obrigado, {{ order.customer_name }}! Seu pedido foi processado com
+        sucesso.
     </p>
-    
+
     <div class="order-details">
         <div class="row">
             <div class="col-md-6">
@@ -26,42 +24,53 @@
                 </p>
             </div>
         </div>
-        
-        <div class="mt-4 p-3" style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; border-left: 4px solid var(--success-color);">
+
+        <div
+            class="mt-4 p-3"
+            style="
+                background: rgba(16, 185, 129, 0.1);
+                border-radius: 12px;
+                border-left: 4px solid var(--success-color);
+            "
+        >
             <i class="fas fa-info-circle me-2"></i>
-            <strong>Próximos passos:</strong> 
-            Entraremos em contato para confirmar os detalhes da entrega e coordenar os arranjos necessários.
+            <strong>Próximos passos:</strong>
+            Entraremos em contato para confirmar os detalhes da entrega e
+            coordenar os arranjos necessários.
         </div>
     </div>
-    
+
+    <
     <div class="action-buttons">
-        <a href="https://api.whatsapp.com/send?phone=5551983339080&text=Olá,%20gostaria%20de%20acompanhar%20meu%20pedido!" 
-           class="whatsapp-button" target="_blank">
-            <i class="fab fa-whatsapp"></i>
-            Acompanhar no WhatsApp
+        <a
+            href="{{ url_for('download_receipt', order_id=order.id) }}"
+            class="btn btn-gradient"
+        >
+            <i class="fas fa-download me-2"></i>
+            Baixar Comprovativo
         </a>
-        
-        <a href="{{ url_for('index') }}" class="download-receipt">
-            <i class="fas fa-arrow-left"></i>
+
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
             Voltar ao Início
         </a>
     </div>
-    
-    <!-- Receipt Section -->
+
     <div class="order-details mt-4">
         <h6>
             <i class="fas fa-receipt me-2"></i>
             Comprovante de Pagamento
         </h6>
         <p>
-            Seu comprovante foi gerado automaticamente. Para futuras referências, 
-            guarde o número do pedido: <strong>#{{ order.id }}</strong>
+            Seu comprovante foi gerado automaticamente. Para futuras
+            referências, guarde o número do pedido:
+            <strong>#{{ order.id }}</strong>
         </p>
-        
+
         <div class="row">
             <div class="col-sm-6">
                 <small>Data do Pedido:</small>
-                <p class="mb-2">{{ moment().format('DD/MM/YYYY HH:mm') }}</p>
+                <p class="mb-2">{{ order.order_date }}</p>
             </div>
             <div class="col-sm-6">
                 <small>Método de Pagamento:</small>
@@ -70,33 +79,35 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-// Auto-redirect to WhatsApp after 5 seconds
-setTimeout(function() {
-    const whatsappLink = document.querySelector('a[href*="whatsapp"]');
-    if (whatsappLink) {
-        // Show countdown
-        const countdownElement = document.createElement('div');
-        countdownElement.className = 'alert alert-info mt-3';
-        countdownElement.innerHTML = '<i class="fas fa-clock me-2"></i>Redirecionando para WhatsApp em <span id="countdown">5</span> segundos...';
-        
-        const actionButtons = document.querySelector('.action-buttons');
-        actionButtons.parentNode.insertBefore(countdownElement, actionButtons.nextSibling);
-        
-        let seconds = 5;
-        const interval = setInterval(function() {
-            seconds--;
-            document.getElementById('countdown').textContent = seconds;
-            
-            if (seconds === 0) {
-                clearInterval(interval);
-                window.open(whatsappLink.href, '_blank');
-            }
-        }, 1000);
-    }
-}, 1000);
+    // Auto-redirect to WhatsApp after 5 seconds
+    setTimeout(function () {
+        const whatsappLink = document.querySelector('a[href*="whatsapp"]');
+        if (whatsappLink) {
+            // Show countdown
+            const countdownElement = document.createElement("div");
+            countdownElement.className = "alert alert-info mt-3";
+            countdownElement.innerHTML =
+                '<i class="fas fa-clock me-2"></i>Redirecionando para WhatsApp em <span id="countdown">5</span> segundos...';
+
+            const actionButtons = document.querySelector(".action-buttons");
+            actionButtons.parentNode.insertBefore(
+                countdownElement,
+                actionButtons.nextSibling,
+            );
+
+            let seconds = 5;
+            const interval = setInterval(function () {
+                seconds--;
+                document.getElementById("countdown").textContent = seconds;
+
+                if (seconds === 0) {
+                    clearInterval(interval);
+                    window.open(whatsappLink.href, "_blank");
+                }
+            }, 1000);
+        }
+    }, 1000);
 </script>
 {% endblock %}
