@@ -2848,3 +2848,52 @@ body {
         font-size: 1rem;
     }
 }
+
+/* ======================================================== */
+/* ESTILOS PERSONALIZADOS PARA A TABELA (VERSÃO FINAL)      */
+/* ======================================================== */
+
+.table-container {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+/* Cor do cabeçalho da tabela */
+.table thead th {
+    background-color: var(--bg-tertiary);
+    /* Cinza escuro dos campos de data */
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* CORREÇÃO PRINCIPAL - Linhas da tabela e cor do texto */
+.table tbody tr,
+.table tbody td {
+    background-color: var(--bg-secondary);
+    /* Fundo mais escuro */
+    color: var(--text-primary);
+    /* Texto branco */
+    border-color: var(--border-color) !important;
+}
+
+/* Efeito ao passar o rato por cima */
+.table tbody tr:hover,
+.table tbody tr:hover td {
+    background-color: var(--bg-tertiary);
+    /* Fica da cor do cabeçalho */
+}
+
+/* Remove a cor da badge de status que está a ser afetada */
+.table .badge {
+    color: #FFF !important;
+}
+
+.table tbody tr:hover {
+    background-color: var(--bg-tertiary);
+    cursor: pointer;
+}

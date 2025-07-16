@@ -96,7 +96,7 @@ Montserrat{% endblock %} {% block content %}
                     <tr>
                         <td><strong>#{{ order.id }}</strong></td>
                         <td>
-                            {{ order.order_date.strftime('%d/%m/%Y %H:%M') }}
+                            {{ order.order_date|localtime }}</td>
                         </td>
                         <td>{{ order.customer_name }}</td>
                         <td>{{ order.crown_name }}</td>

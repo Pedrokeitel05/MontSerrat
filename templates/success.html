@@ -70,7 +70,7 @@ Montserrat{% endblock %} {% block content %}
         <div class="row">
             <div class="col-sm-6">
                 <small>Data do Pedido:</small>
-                <p class="mb-2">{{ order.order_date }}</p>
+                <p class="mb-2">{{ order.order_date|localtime }}</p>
             </div>
             <div class="col-sm-6">
                 <small>Método de Pagamento:</small>

@@ -59,3 +59,19 @@ def create_tables_command():
     with app.app_context():
         db.create_all()
     print("Tabelas criadas com sucesso na base de dados conectada!")
+
+
+# ... (no final do ficheiro, depois de 'import routes')
+
+from datetime import timedelta
+
+
+# --- FILTRO DE TEMPLATE PARA FUSO HORÁRIO ---
+@app.template_filter('localtime')
+def localtime_filter(utc_dt):
+    """Converte uma data UTC para o fuso horário local (UTC-3)."""
+    if utc_dt is None:
+        return ""
+    # Ajusta para o fuso de Brasília (UTC-3)
+    local_dt = utc_dt - timedelta(hours=3)
+    return local_dt.strftime('%d/%m/%Y %H:%M')

@@ -82,10 +82,7 @@ block content %}
                         </div>
                     </div>
                     <div class="card-footer mt-3">
-                        <small
-                            >{{ order.order_date.strftime('%d/%m/%Y %H:%M')
-                            }}</small
-                        >
+                        <small>{{ order.order_date|localtime }}</small>
                         <div
                             class="order-timer"
                             data-order-date="{{ order.order_date.isoformat() }}"
@@ -175,10 +172,7 @@ block content %}
                         </div>
                     </div>
                     <div class="card-footer mt-3">
-                        <small
-                            >{{ order.order_date.strftime('%d/%m/%Y %H:%M')
-                            }}</small
-                        >
+                        <small>{{ order.order_date|localtime }}</small>
                         <div
                             class="order-timer"
                             data-order-date="{{ order.order_date.isoformat() }}"
@@ -259,10 +253,7 @@ block content %}
                         </div>
                     </div>
                     <div class="card-footer mt-3">
-                        <small
-                            >{{ order.order_date.strftime('%d/%m/%Y %H:%M')
-                            }}</small
-                        >
+                        <small>{{ order.order_date|localtime }}</small>
                         <div class="order-timer final-status">
                             <i class="fas fa-check-double"></i>
                             <span>Concluído</span>
@@ -393,7 +384,6 @@ block content %}
         const notificationSound = document.getElementById("notification-sound");
         let audioUnlocked = false;
 
-        // --- LÓGICA PARA DESBLOQUEAR O ÁUDIO ---
         function unlockAudio() {
             if (!audioUnlocked) {
                 notificationSound.volume = 0;
@@ -407,7 +397,6 @@ block content %}
         }
         document.body.addEventListener("click", unlockAudio);
 
-        // --- LÓGICA DE ATUALIZAÇÃO AUTOMÁTICA ---
         async function checkForNewOrders() {
             const allPendingCards = document.querySelectorAll(
                 "#pending .order-card",
@@ -431,16 +420,57 @@ block content %}
                     if (audioUnlocked) {
                         notificationSound.play();
                     }
-                    // Recarrega a página para garantir que tudo seja atualizado de forma simples e robusta.
-                    location.reload();
+                    newOrders.forEach(addOrderCardToBoard);
+                    updateColumnTitle("pending", newOrders.length);
+                    showToast(
+                        `${newOrders.length} novo(s) pedido(s) recebido(s)!`,
+                        "info",
+                    );
                 }
             } catch (error) {
                 console.error("Erro ao verificar novos pedidos:", error);
             }
         }
-        setInterval(checkForNewOrders, 15000);
 
-        // --- LÓGICA UNIFICADA PARA MUDANÇA DE STATUS ---
+        function addOrderCardToBoard(order) {
+            const columnBody = document.querySelector("#pending .column-body");
+            if (!columnBody) return;
+
+            const cardHTML = `
+                <div class="order-card" draggable="true" data-order-id="${order.id}" style="animation: fadeInDown 0.5s ease;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="card-customer">${order.customer_name}</div>
+                            <div class="card-product">${order.crown_name}</div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><button class="dropdown-item btn-view-details" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" data-order-id="${order.id}"><i class="fas fa-eye me-2"></i>Ver Detalhes</button></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item btn-change-status" data-next-status="in_progress"><i class="fas fa-arrow-right me-2"></i>Avançar Etapa</button></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item btn-cancel-order text-danger" data-order-id="${order.id}"><i class="fas fa-trash-alt me-2"></i>Cancelar Pedido</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-footer mt-3">
+                        <small>${order.order_date_formatted}</small>
+                        <div class="order-timer" data-order-date="${order.order_date_iso}">
+                            <i class="fas fa-clock"></i> <span>--:--:--</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            columnBody.insertAdjacentHTML("afterbegin", cardHTML);
+            const newCard = columnBody.firstChild;
+            addEventListenersToCard(newCard);
+        }
+
+        setInterval(checkForNewOrders, 10000);
+
         async function changeOrderStatus(orderId, newStatus) {
             try {
                 const response = await fetch(
@@ -466,20 +496,33 @@ block content %}
             }
         }
 
-        // --- LÓGICA DO DRAG AND DROP (PARA DESKTOP) ---
-        const cards = document.querySelectorAll(".order-card");
+        function addEventListenersToCard(card) {
+            card.addEventListener("dragstart", onDragStart);
+            card.addEventListener("dragend", onDragEnd);
+            card.querySelectorAll(".btn-change-status").forEach((btn) =>
+                btn.addEventListener("click", onChangeStatusClick),
+            );
+            card.querySelector(".btn-cancel-order")?.addEventListener(
+                "click",
+                onCancelOrderClick,
+            );
+        }
+
         let draggedCard = null;
 
-        cards.forEach((card) => {
-            card.addEventListener("dragstart", () => {
-                draggedCard = card;
-                setTimeout(() => card.classList.add("dragging"), 0);
-            });
-            card.addEventListener("dragend", () => {
-                if (draggedCard) draggedCard.classList.remove("dragging");
-                draggedCard = null;
-            });
-        });
+        function onDragStart(event) {
+            draggedCard = event.target.closest(".order-card");
+            setTimeout(() => draggedCard.classList.add("dragging"), 0);
+        }
+
+        function onDragEnd() {
+            if (draggedCard) draggedCard.classList.remove("dragging");
+            draggedCard = null;
+        }
+
+        document
+            .querySelectorAll(".order-card")
+            .forEach(addEventListenersToCard);
 
         document.querySelectorAll(".order-column").forEach((column) => {
             column.addEventListener("dragover", (e) => {
@@ -521,18 +564,53 @@ block content %}
             ).element;
         }
 
-        // --- LÓGICA PARA OS BOTÕES DO MENU (AVANÇAR/RETROCEDER) ---
-        document.querySelectorAll(".btn-change-status").forEach((button) => {
-            button.addEventListener("click", function (e) {
-                e.stopPropagation();
-                const card = this.closest(".order-card");
-                const orderId = card.dataset.orderId;
-                const nextStatus = this.dataset.nextStatus;
-                changeOrderStatus(orderId, nextStatus);
-            });
-        });
+        function onChangeStatusClick(e) {
+            e.stopPropagation();
+            const card = this.closest(".order-card");
+            const orderId = card.dataset.orderId;
+            const nextStatus = this.dataset.nextStatus;
+            changeOrderStatus(orderId, nextStatus);
+        }
 
-        // --- LÓGICA DO MODAL, CANCELAMENTO E CRONÓMETRO ---
+        async function onCancelOrderClick(e) {
+            e.stopPropagation();
+            const orderId = this.dataset.orderId;
+
+            if (
+                confirm(
+                    `Tem a certeza que quer cancelar o Pedido #${orderId}? Esta ação não pode ser desfeita.`,
+                )
+            ) {
+                try {
+                    const response = await fetch(
+                        `/admin/order/delete/${orderId}`,
+                        { method: "POST" },
+                    );
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showToast(result.message, "success");
+                        const cardToRemove = document.querySelector(
+                            `.order-card[data-order-id='${orderId}']`,
+                        );
+                        if (cardToRemove) {
+                            const columnId =
+                                cardToRemove.closest(".order-column").id;
+                            cardToRemove.remove();
+                            updateColumnTitle(columnId, -1);
+                        }
+                    } else {
+                        showToast(result.message, "danger");
+                    }
+                } catch (error) {
+                    showToast(
+                        "Erro de comunicação ao cancelar pedido.",
+                        "danger",
+                    );
+                }
+            }
+        }
+
         const detailsModal = document.getElementById("orderDetailsModal");
         if (detailsModal) {
             detailsModal.addEventListener(
@@ -600,41 +678,23 @@ block content %}
             );
         }
 
-        document.querySelectorAll(".btn-cancel-order").forEach((button) => {
-            button.addEventListener("click", async function (e) {
-                e.stopPropagation();
-                const orderId = this.dataset.orderId;
-
-                if (
-                    confirm(
-                        `Tem a certeza que quer cancelar o Pedido #${orderId}? Esta ação não pode ser desfeita.`,
-                    )
-                ) {
-                    try {
-                        const response = await fetch(
-                            `/admin/order/delete/${orderId}`,
-                            { method: "POST" },
-                        );
-                        const result = await response.json();
-
-                        if (result.success) {
-                            showToast(result.message, "success");
-                            const cardToRemove = document.querySelector(
-                                `.order-card[data-order-id='${orderId}']`,
-                            );
-                            if (cardToRemove) cardToRemove.remove();
-                        } else {
-                            showToast(result.message, "danger");
-                        }
-                    } catch (error) {
-                        showToast(
-                            "Erro de comunicação ao cancelar pedido.",
-                            "danger",
-                        );
-                    }
+        function updateColumnTitle(columnId, change) {
+            const columnTitle = document.querySelector(
+                `#${columnId} .column-title`,
+            );
+            if (columnTitle) {
+                const text = columnTitle.innerText;
+                const match = text.match(/\((\d+)\)/);
+                if (match) {
+                    const currentCount = parseInt(match[1], 10);
+                    const newCount = currentCount + change;
+                    columnTitle.innerText = text.replace(
+                        `(${currentCount})`,
+                        `(${newCount})`,
+                    );
                 }
-            });
-        });
+            }
+        }
 
         function updateTimers() {
             document
@@ -709,6 +769,17 @@ block content %}
     }
     .order-timer.final-status {
         color: var(--text-muted);
+    }
+    /* Animação para o novo card */
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 {% endblock %}

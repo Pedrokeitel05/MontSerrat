@@ -10,6 +10,23 @@ import cloudinary.uploader
 import time
 import hashlib
 from flask import send_from_directory
+from flask import Response
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment
+from io import BytesIO
+
+
+# --- DECORADOR DE LOGIN ---
+# A função foi movida para aqui.
+def login_required(f):
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session: return redirect(url_for('login'))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
 
 # Configurações
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
@@ -171,10 +188,10 @@ def payment_success():
         return redirect(url_for('checkout'))
 
 
+# Rota protegida com o decorador
 @app.route('/download-receipt/<int:order_id>')
+@login_required
 def download_receipt(order_id):
-    # A verificação de segurança que causava o erro foi removida daqui
-    # para garantir que o download funcione de forma mais fiável.
     try:
         order = Order.query.get_or_404(order_id)
         filepath = generate_receipt(order)
@@ -189,16 +206,7 @@ def download_receipt(order_id):
 
 
 # --- ROTAS DE ADMIN ---
-def login_required(f):
-
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session: return redirect(url_for('login'))
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
+# A definição do decorador foi movida para o topo
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -214,7 +222,12 @@ def login():
     return render_template('login.html')
 
 
+# (restante do seu código continua aqui...)
+# ...
+
+
 @app.route('/logout')
+@login_required
 def logout():
     session.pop('logged_in', None)
     flash('Sessão terminada com sucesso.', 'success')
@@ -408,21 +421,112 @@ def get_order_details(order_id):
     order = Order.query.get_or_404(order_id)
 
     order_details = {
-        "id": f"#{order.id}",
-        "status": order.status.replace('_', ' ').title(),
-        "order_date": order.order_date.strftime('%d/%m/%Y às %H:%M'),
-        "total_amount": f"R$ {order.total_amount:.2f}",
-        "customer_name": order.customer_name,
-        "customer_phone": order.customer_phone,
-        "customer_email": order.customer_email,
-        "crown_name": order.crown_name,
-        "custom_message": order.custom_message or "Nenhuma",
-        "deceased_name": order.deceased_name or "Não informado",
-        "delivery_location": order.delivery_location or "Não informado",
-        "chapel": order.chapel or "Não informado",
-        "opening_time": order.opening_time or "Não informado"
+        "id":
+        f"#{order.id}",
+        "status":
+        order.status.replace('_', ' ').title(),
+        "order_date":
+        (order.order_date - timedelta(hours=3)).strftime('%d/%m/%Y às %H:%M'),
+        "total_amount":
+        f"R$ {order.total_amount:.2f}",
+        "customer_name":
+        order.customer_name,
+        "customer_phone":
+        order.customer_phone,
+        "customer_email":
+        order.customer_email,
+        "crown_name":
+        order.crown_name,
+        "custom_message":
+        order.custom_message or "Nenhuma",
+        "deceased_name":
+        order.deceased_name or "Não informado",
+        "delivery_location":
+        order.delivery_location or "Não informado",
+        "chapel":
+        order.chapel or "Não informado",
+        "opening_time":
+        order.opening_time or "Não informado"
     }
     return jsonify(order_details)
+
+
+@app.route('/admin/export-report')
+@login_required
+def export_report():
+    """Gera e exporta um relatório de pedidos em formato .xlsx."""
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+
+    query = Order.query
+
+    if start_date_str:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        query = query.filter(Order.order_date >= start_date)
+
+    if end_date_str:
+        end_date = datetime.strptime(end_date_str,
+                                     '%Y-%m-%d') + timedelta(days=1)
+        query = query.filter(Order.order_date < end_date)
+
+    orders = query.order_by(Order.order_date.desc()).all()
+
+    # Cria o livro de trabalho e a folha do Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Relatorio de Pedidos"
+
+    # Define os cabeçalhos
+    headers = [
+        "ID do Pedido", "Data", "Cliente", "Email", "Telefone", "Produto",
+        "Valor", "Status", "Homenageado", "Local Entrega"
+    ]
+    ws.append(headers)
+
+    # Aplica estilo aos cabeçalhos
+    bold_font = Font(bold=True)
+    for cell in ws[1]:
+        cell.font = bold_font
+        cell.alignment = Alignment(horizontal="center")
+
+    # Adiciona os dados dos pedidos
+    for order in orders:
+        local_date = (order.order_date -
+                      timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')
+        ws.append([
+            order.id, local_date, order.customer_name, order.customer_email,
+            order.customer_phone, order.crown_name, order.total_amount,
+            order.status, order.deceased_name, order.delivery_location
+        ])
+
+    # Ajusta a largura das colunas
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+
+    # Prepara o ficheiro para download
+    virtual_workbook = BytesIO()
+    wb.save(virtual_workbook)
+    virtual_workbook.seek(0)
+
+    # Define o nome do ficheiro dinamicamente
+    filename = "relatorio_pedidos.xlsx"
+    if start_date_str and end_date_str:
+        filename = f"relatorio_{start_date_str}_a_{end_date_str}.xlsx"
+
+    return Response(
+        virtual_workbook,
+        mimetype=
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment;filename={filename}'})
 
 
 @app.route('/admin/order/delete/<int:order_id>', methods=['POST'])
@@ -462,7 +566,7 @@ def get_new_orders():
             "crown_name":
             order.crown_name,
             "order_date_formatted":
-            (order.order_date - timedelta(hours=3)).strftime('%d/%m/%Y %H:%M'),
+            order.order_date.strftime('%d/%m/%Y %H:%M'),
             "order_date_iso":
             order.order_date.isoformat() + "Z"
         })
