@@ -127,7 +127,7 @@
 
         <main>{% block content %}{% endblock %}</main>
 
-        {% if 'logged_in' not in session and request.endpoint != 'login' %}
+        {% if 'logged_in' not in session and request.endpoint != 'login' and request.endpoint != 'payment_success' %}
 
         <a
             href="https://api.whatsapp.com/send?phone=5551983339080&text=Ol%C3%A1%2C%20vim%20pelo%20site%20e%20tenho%20d%C3%BAvidas%20a%20respeito%20das%20coroas%20de%20flores"

@@ -110,6 +110,10 @@ Serrat{% endblock %} {% block content %}
                                     height="300"
                                 ></canvas>
                             </div>
+                            <small class="text-muted d-block text-center mt-2"
+                                >* Imagem ilustrativa, pequenas alterações podem
+                                ocorrer.</small
+                            >
                         </div>
                         <div class="col-md-6">
                             <div id="messageInitialStep">
@@ -162,8 +166,7 @@ Serrat{% endblock %} {% block content %}
                                         type="button"
                                         class="btn btn-suggestion"
                                     >
-                                        Com carinho e gratidão por tudo que você
-                                        foi.
+                                        Com carinho e gratidão.
                                     </button>
                                 </div>
                                 <button
@@ -281,6 +284,7 @@ Serrat{% endblock %} {% block content %}
                     type="submit"
                     form="customizeForm"
                     class="btn btn-primary"
+                    disabled
                 >
                     <i class="fas fa-cart-plus me-2"></i>Adicionar ao Carrinho
                 </button>
@@ -291,7 +295,6 @@ Serrat{% endblock %} {% block content %}
 {% endblock %} {% block scripts %} {{ super() }}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // --- ELEMENTOS DO DOM ---
         const customizeModal = new bootstrap.Modal(
             document.getElementById("customizeModal"),
         );
@@ -299,6 +302,9 @@ Serrat{% endblock %} {% block content %}
         const canvas = document.getElementById("previewCanvas");
         const ctx = canvas.getContext("2d");
         let currentCrownImage = null;
+
+        const ribbonImage = new Image();
+        ribbonImage.src = "{{ url_for('static', filename='img/faixa.png') }}";
 
         const initialStep = document.getElementById("messageInitialStep");
         const familiarStep = document.getElementById("messageFamiliarStep");
@@ -314,7 +320,6 @@ Serrat{% endblock %} {% block content %}
             empresarialStep,
             personalizadaStep,
         ];
-
         const finalMessageTextarea =
             document.getElementById("finalCustomMessage");
         const customMessageInput =
@@ -323,8 +328,9 @@ Serrat{% endblock %} {% block content %}
         const empresaRadios = document.querySelectorAll(
             'input[name="empresaRadio"]',
         );
-
-        // --- FUNÇÕES AUXILIARES ---
+        const addToCartButton = customizeModalEl.querySelector(
+            'button[type="submit"]',
+        );
 
         function autoGrow(element) {
             element.style.height = "5px";
@@ -353,11 +359,70 @@ Serrat{% endblock %} {% block content %}
             img.src = imageUrl;
         }
 
+        function wrapAndDrawText(
+            context,
+            text,
+            x,
+            y,
+            maxWidth,
+            initialFontSize,
+            lineHeight,
+        ) {
+            let fontSize = initialFontSize;
+            context.font = `bold ${fontSize}px 'Helvetica', sans-serif`;
+
+            const words = text.split(" ");
+            let longestWord = "";
+            words.forEach((word) => {
+                if (
+                    context.measureText(word).width >
+                    context.measureText(longestWord).width
+                ) {
+                    longestWord = word;
+                }
+            });
+
+            while (
+                context.measureText(longestWord).width > maxWidth &&
+                fontSize > 8
+            ) {
+                fontSize--;
+                context.font = `bold ${fontSize}px 'Helvetica', sans-serif`;
+            }
+
+            let lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const width = context.measureText(
+                    currentLine + " " + word,
+                ).width;
+                if (width < maxWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            lines.push(currentLine);
+
+            const totalTextHeight = lines.length * lineHeight;
+            let startY = y - totalTextHeight / 2 + lineHeight / 2;
+
+            context.fillStyle = "#1a1a1a";
+            context.textAlign = "center";
+            context.textBaseline = "middle";
+
+            lines.forEach((line) => {
+                context.fillText(line, x, startY);
+                startY += lineHeight;
+            });
+        }
+
         function updatePreview() {
             if (!currentCrownImage) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = "#f0f0f0";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 return;
             }
 
@@ -371,68 +436,78 @@ Serrat{% endblock %} {% block content %}
             }
             const x = (canvas.width - drawWidth) / 2;
             const y = (canvas.height - drawHeight) / 2;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(currentCrownImage, x, y, drawWidth, drawHeight);
 
             const message = finalMessageTextarea.value.trim();
-            if (message) {
-                const padding = 15;
-                const fontSize = 16;
-                ctx.font = `bold ${fontSize}px Inter`;
-                ctx.textAlign = "center";
-                const textWidth = ctx.measureText(message).width;
 
-                ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-                ctx.fillRect(
-                    (canvas.width - textWidth - padding * 2) / 2,
-                    canvas.height - 60,
-                    textWidth + padding * 2,
-                    fontSize + padding,
+            if (message && ribbonImage.complete) {
+                const ribbonHeight = 45;
+                const ribbonWidth = canvas.width * 0.98;
+                const ribbonX = (canvas.width - ribbonWidth) / 2;
+                const ribbonY = canvas.height - ribbonHeight - 40;
+
+                ctx.drawImage(
+                    ribbonImage,
+                    ribbonX,
+                    ribbonY,
+                    ribbonWidth,
+                    ribbonHeight,
                 );
 
-                ctx.fillStyle = "white";
-                ctx.fillText(message, canvas.width / 2, canvas.height - 42);
+                const textAreaWidth = ribbonWidth * 0.75;
+                const textCenterX = canvas.width / 2;
+                const textCenterY = ribbonY + ribbonHeight / 2;
+
+                wrapAndDrawText(
+                    ctx,
+                    message,
+                    textCenterX,
+                    textCenterY,
+                    textAreaWidth,
+                    16,
+                    18,
+                );
             }
+
+            addToCartButton.disabled = message === "";
         }
 
         function resetModalState() {
             allSteps.forEach((s) => (s.style.display = "none"));
             initialStep.style.display = "block";
-
             finalMessageTextarea.value = "";
             customMessageInput.value = "";
             autoGrow(customMessageInput);
-
             empresaLacuna.value = "";
             empresaLacuna.style.display = "none";
-            empresaRadios.forEach((r) => {
-                r.checked = false;
-            });
-
+            empresaRadios.forEach((r) => (r.checked = false));
             document
                 .querySelectorAll(".btn-suggestion.active")
                 .forEach((b) => b.classList.remove("active"));
+            addToCartButton.disabled = true;
             updatePreview();
         }
 
-        // --- EVENT LISTENERS ---
-
-        // Preencher o modal ao clicar em "Personalizar"
         document.querySelectorAll(".btn-customize").forEach((button) => {
             button.addEventListener("click", function () {
                 document.getElementById("crownId").value = this.dataset.crownId;
                 document.getElementById("headerCrownName").textContent =
                     this.dataset.crownName;
+                const priceValue = parseFloat(
+                    String(this.dataset.crownPrice).replace(",", "."),
+                );
                 document.getElementById("headerCrownPrice").textContent =
-                    `R$ ${parseFloat(this.dataset.crownPrice).toFixed(2)}`;
+                    `R$ ${priceValue.toFixed(2)}`;
 
-                loadCrownImage(this.dataset.crownImage, updatePreview);
+                loadCrownImage(this.dataset.crownImage, () => {
+                    ribbonImage.onload = updatePreview;
+                    updatePreview();
+                });
                 customizeModal.show();
             });
         });
 
-        // Navegação entre os passos
         document.querySelectorAll(".suggestion-step-btn").forEach((button) => {
             button.addEventListener("click", function () {
                 const stepToShow = this.dataset.step;
@@ -448,15 +523,12 @@ Serrat{% endblock %} {% block content %}
             });
         });
 
-        // Botões "Voltar"
         document.querySelectorAll(".btn-back").forEach((button) => {
             button.addEventListener("click", resetModalState);
         });
 
-        // Resetar o modal completamente ao fechar
         customizeModalEl.addEventListener("hidden.bs.modal", resetModalState);
 
-        // Lógica para sugestões de Familiares
         document
             .querySelectorAll("#messageFamiliarStep .btn-suggestion")
             .forEach((button) => {
@@ -472,7 +544,6 @@ Serrat{% endblock %} {% block content %}
                 });
             });
 
-        // Lógica para sugestões Empresariais
         function updateEmpresarialMessage() {
             const selectedRadio = document.querySelector(
                 'input[name="empresaRadio"]:checked',
@@ -492,7 +563,6 @@ Serrat{% endblock %} {% block content %}
         );
         empresaLacuna.addEventListener("input", updateEmpresarialMessage);
 
-        // Lógica para mensagem personalizada
         customMessageInput.addEventListener("input", function () {
             finalMessageTextarea.value = this.value;
             autoGrow(this);

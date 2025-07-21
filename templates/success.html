@@ -40,8 +40,7 @@ Montserrat{% endblock %} {% block content %}
         </div>
     </div>
 
-    <
-    <div class="action-buttons">
+    <div class="action-buttons d-flex justify-content-center gap-2 flex-wrap">
         <a
             href="{{ url_for('download_receipt', order_id=order.id) }}"
             class="btn btn-gradient"
@@ -50,12 +49,20 @@ Montserrat{% endblock %} {% block content %}
             Baixar Comprovativo
         </a>
 
-        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-2"></i>
-            Voltar ao Início
+        {# 1. Criamos a variável com a mensagem personalizada #} {% set
+        whatsapp_message = "Olá, me chamo " ~ order.customer_name ~ "! Gostaria
+        de acompanhar o andamento do pedido #" ~ order.id ~ "." %} {# 2.
+        Construímos o link com a mensagem codificada para URL #}
+        <a
+            href="https://api.whatsapp.com/send?phone=5551983339080&text={{ whatsapp_message|urlencode }}"
+            class="btn"
+            style="background-color: #25d366; color: white"
+            target="_blank"
+        >
+            <i class="fab fa-whatsapp me-2"></i>
+            Acompanhar Pedido
         </a>
     </div>
-
     <div class="order-details mt-4">
         <h6>
             <i class="fas fa-receipt me-2"></i>
@@ -79,35 +86,5 @@ Montserrat{% endblock %} {% block content %}
         </div>
     </div>
 </div>
-{% endblock %} {% block scripts %}
-<script>
-    // Auto-redirect to WhatsApp after 5 seconds
-    setTimeout(function () {
-        const whatsappLink = document.querySelector('a[href*="whatsapp"]');
-        if (whatsappLink) {
-            // Show countdown
-            const countdownElement = document.createElement("div");
-            countdownElement.className = "alert alert-info mt-3";
-            countdownElement.innerHTML =
-                '<i class="fas fa-clock me-2"></i>Redirecionando para WhatsApp em <span id="countdown">5</span> segundos...';
-
-            const actionButtons = document.querySelector(".action-buttons");
-            actionButtons.parentNode.insertBefore(
-                countdownElement,
-                actionButtons.nextSibling,
-            );
-
-            let seconds = 5;
-            const interval = setInterval(function () {
-                seconds--;
-                document.getElementById("countdown").textContent = seconds;
-
-                if (seconds === 0) {
-                    clearInterval(interval);
-                    window.open(whatsappLink.href, "_blank");
-                }
-            }, 1000);
-        }
-    }, 1000);
-</script>
-{% endblock %}
+{% endblock %} {% block scripts %} {# O script de redirecionamento automático
+foi removido daqui #} {% endblock %}

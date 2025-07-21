@@ -2395,33 +2395,52 @@ body {
 }
 
 /* ================================================================= */
-/* ESTILOS PARA AS SUGESTÕES DE MENSAGEM NO MODAL                  */
+/* ESTILOS CORRIGIDOS PARA AS SUGESTÕES DE MENSAGEM                  */
 /* ================================================================= */
 
+.suggestion-step-btn {
+    border-radius: 50px;
+}
+
 .btn-suggestion {
+    /* Estilos base */
     background-color: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    text-align: left;
     transition: all 0.2s ease;
+    border-radius: 50px;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    text-align: center;
+
+    /* CORREÇÃO PRINCIPAL: Garante que o texto fique numa única linha */
+    white-space: nowrap;
+
+    /* Garante que o botão se comporte como um elemento de linha */
+    display: inline-block;
+    width: auto;
+    /* A largura será automática com base no conteúdo */
 }
 
 .btn-suggestion:hover {
-    background-color: var(--bg-primary);
+    background-color: var(--bg-secondary);
     border-color: var(--accent-color);
     color: var(--text-primary);
 }
 
-.btn-suggestion.active {
+.btn-suggestion.active,
+.suggestion-group .form-check-input:checked+.btn-suggestion {
     background-color: var(--accent-color);
     border-color: var(--accent-color);
     color: #FFF;
     font-weight: 500;
+    box-shadow: 0 0 8px rgba(var(--accent-color-rgb), 0.5);
 }
 
-.btn-link.btn-back {
-    text-decoration: none;
-    color: var(--text-muted);
+.btn-back {
+    border-radius: 50px;
 }
 
 /* ================================================================= */
@@ -2443,57 +2462,8 @@ body {
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
     text-align: center;
-    white-space: normal;
+    white-space: nowrap;
     line-height: 1.4;
-}
-
-/* ================================================================= */
-/* ESTILOS PARA AS SUGESTÕES DE MENSAGEM NO MODAL                  */
-/* ================================================================= */
-
-.suggestion-step-btn {
-    border-radius: 50px;
-}
-
-.btn-suggestion {
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-    border-radius: 50px;
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-
-    /* --- GARANTIA DE ESTILO CONSISTENTE --- */
-    white-space: normal;
-    /* Permite que o texto quebre a linha */
-    text-align: center;
-    /* Centraliza o texto (incluindo o que quebrou a linha) */
-    line-height: 1.4;
-    /* Melhora o espaçamento entre as linhas */
-    display: block;
-    /* Garante que o label se comporte como um bloco para o alinhamento funcionar */
-    width: 100%;
-}
-
-.btn-suggestion:hover {
-    background-color: var(--bg-secondary);
-    border-color: var(--accent-color);
-    color: var(--text-primary);
-}
-
-.btn-suggestion.active,
-.suggestion-group .form-check-input:checked+.btn-suggestion {
-    background-color: var(--accent-color);
-    border-color: var(--accent-color);
-    color: #FFF;
-    font-weight: 500;
-    box-shadow: 0 0 8px rgba(var(--accent-color-rgb), 0.5);
-}
-
-.btn-back {
-    border-radius: 50px;
 }
 
 /* NOVO: Estilo para o campo de texto da empresa */

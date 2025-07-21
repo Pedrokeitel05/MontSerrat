@@ -128,6 +128,9 @@ def create_checkout_session():
         return redirect(url_for('checkout'))
 
 
+# Em routes.py
+
+
 @app.route('/payment-success')
 def payment_success():
     session_id = request.args.get('session_id')
@@ -168,14 +171,10 @@ def payment_success():
 
             session['last_order_id'] = order.id
 
-            order_details_for_template = {
-                'id': order.id,
-                'customer_name': order.customer_name,
-                'order_date': order.order_date.strftime('%d/%m/%Y %H:%M')
-            }
-
-            return render_template('success.html',
-                                   order=order_details_for_template)
+            # --- CORREÇÃO APLICADA AQUI ---
+            # Enviamos o objeto "order" completo diretamente para a página.
+            # O dicionário "order_details_for_template" foi removido.
+            return render_template('success.html', order=order)
 
         else:
             flash(
@@ -190,8 +189,16 @@ def payment_success():
 
 # Rota protegida com o decorador
 @app.route('/download-receipt/<int:order_id>')
-@login_required
 def download_receipt(order_id):
+    # --- NOVA LÓGICA DE SEGURANÇA ---
+    # Permite o acesso se:
+    # 1. O utilizador for um administrador logado.
+    # 2. OU se o ID do pedido corresponder ao último pedido feito nesta sessão de navegador.
+    if 'logged_in' not in session and session.get('last_order_id') != order_id:
+        flash('Acesso não autorizado para baixar este recibo.', 'error')
+        return redirect(url_for('index'))
+
+    # Se a verificação passar, o resto do código é executado normalmente.
     try:
         order = Order.query.get_or_404(order_id)
         filepath = generate_receipt(order)
@@ -348,13 +355,26 @@ def move_crown(crown_id, direction):
 @app.route('/admin/orders')
 @login_required
 def order_management():
-    today = date.today()
-    start_of_day = datetime.combine(today, datetime.min.time())
-    end_of_day = datetime.combine(today, datetime.max.time())
+    # --- LÓGICA DE FUSO HORÁRIO CORRIGIDA ---
+    # Pega na hora atual do servidor (UTC)
+    now_utc = datetime.utcnow()
 
+    # Ajusta para o fuso horário do Brasil (UTC-3)
+    now_brt = now_utc - timedelta(hours=3)
+
+    # Define o início e o fim do "hoje" no fuso horário do Brasil
+    start_of_day_brt = datetime.combine(now_brt.date(), datetime.min.time())
+    end_of_day_brt = datetime.combine(now_brt.date(), datetime.max.time())
+
+    # Converte estes limites de volta para UTC para fazer a consulta na base de dados
+    start_of_day_utc = start_of_day_brt + timedelta(hours=3)
+    end_of_day_utc = end_of_day_brt + timedelta(hours=3)
+
+    # A consulta agora usa os limites corretos para buscar apenas os pedidos de "hoje"
     todays_orders = Order.query.filter(
-        Order.order_date >= start_of_day, Order.order_date
-        <= end_of_day).order_by(Order.order_date.desc()).all()
+        Order.order_date >= start_of_day_utc, Order.order_date
+        <= end_of_day_utc).order_by(Order.order_date.desc()).all()
+    # --- FIM DA CORREÇÃO ---
 
     orders_pending = [o for o in todays_orders if o.status == 'pending']
     orders_in_progress = [
