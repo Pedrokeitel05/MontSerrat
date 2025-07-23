@@ -1,5 +1,12 @@
-{% extends "base.html" %} {% block title %}Gestor de Pedidos{% endblock %} {%
-block content %}
+{% extends "base.html" %} {% block title %}Gestor de Pedidos{% endblock %} 
+
+{% block scripts %}
+<!-- Socket.IO Client -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+{{ super() }}
+{% endblock %}
+
+{% block content %}
 <audio
     id="notification-sound"
     src="{{ url_for('static', filename='audio/notification.mp3') }}"
@@ -713,42 +720,170 @@ block content %}
             updateColumnTitle("pending", 1);
         }
 
-        // Sistema de atualizações em tempo real usando polling
-        let lastOrdersData = null;
-        let isPolling = false;
+        // Sistema de atualizações em tempo real usando WebSockets
+        const socket = io();
+        let isConnected = false;
         
-        function startRealTimeUpdates() {
-            if (isPolling) return;
-            isPolling = true;
+        function initializeSocketIO() {
+            // Eventos de conexão
+            socket.on('connect', function() {
+                isConnected = true;
+                console.log('Conectado ao servidor WebSocket');
+                showConnectionStatus('✓ WebSocket conectado - tempo real ativo', 'success');
+                
+                // Entrar no room de admin
+                socket.emit('join_admin');
+            });
             
-            // Mostrar indicador de conexão
-            showConnectionStatus('✓ Atualizações em tempo real ativadas', 'success');
+            socket.on('disconnect', function() {
+                isConnected = false;
+                console.log('Desconectado do servidor WebSocket');
+                showConnectionStatus('⚠️ Conexão perdida - reconectando...', 'warning');
+            });
             
-            // Polling a cada 5 segundos para atualizações de pedidos
-            setInterval(checkForOrderUpdates, 5000);
+            // Eventos de atualização em tempo real
+            socket.on('order_status_updated', function(data) {
+                console.log('Status atualizado via WebSocket:', data);
+                handleOrderStatusUpdate(data);
+                playNotificationSound();
+                showNotification(
+                    `📋 ${data.customer_name}: ${getStatusText(data.old_status)} → ${getStatusText(data.new_status)}`, 
+                    'info'
+                );
+            });
             
-            // Primeira verificação imediata
-            checkForOrderUpdates();
+            socket.on('order_deleted', function(data) {
+                console.log('Pedido excluído via WebSocket:', data);
+                handleOrderDeleted(data);
+                playNotificationSound();
+                showNotification(`🗑️ Pedido de ${data.customer_name} foi excluído`, 'warning');
+            });
+            
+            socket.on('new_order_notification', function(data) {
+                console.log('Novo pedido via WebSocket:', data);
+                handleNewOrder(data);
+                playNotificationSound();
+                showNotification(`🆕 Novo pedido: ${data.customer_name} - ${data.crown_name}`, 'success');
+            });
+            
+            socket.on('error', function(data) {
+                console.error('Erro do WebSocket:', data);
+                showNotification(`❌ Erro: ${data.message}`, 'danger');
+            });
         }
         
-        function checkForOrderUpdates() {
-            fetch('/api/orders-status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Verificar se há mudanças nos pedidos
-                        if (lastOrdersData && JSON.stringify(data.orders) !== JSON.stringify(lastOrdersData)) {
-                            updateOrdersBoard(data.orders);
-                            playNotificationSound();
-                            showNotification('📋 Pedidos atualizados!', 'info');
-                        }
-                        lastOrdersData = data.orders;
+        function handleOrderStatusUpdate(data) {
+            // Encontrar o card do pedido
+            const orderCard = document.querySelector(`[data-order-id="${data.order_id}"]`);
+            if (orderCard) {
+                // Mover o card para a coluna correta
+                moveOrderCardToColumn(orderCard, data.new_status);
+                
+                // Adicionar efeito visual
+                orderCard.style.animation = 'pulse 1s ease-in-out';
+                setTimeout(() => {
+                    orderCard.style.animation = '';
+                }, 1000);
+            }
+            
+            // Atualizar contadores das colunas
+            updateAllColumnCounts();
+        }
+        
+        function handleOrderDeleted(data) {
+            const orderCard = document.querySelector(`[data-order-id="${data.order_id}"]`);
+            if (orderCard) {
+                // Animação de saída
+                orderCard.style.animation = 'fadeOut 0.5s ease-out';
+                setTimeout(() => {
+                    orderCard.remove();
+                    updateAllColumnCounts();
+                }, 500);
+            }
+        }
+        
+        function handleNewOrder(data) {
+            // Adicionar novo card na coluna "pending"
+            const pendingColumn = document.querySelector('#pending .column-body');
+            if (pendingColumn) {
+                // Criar novo card de pedido
+                const newCard = createOrderCard(data);
+                pendingColumn.insertBefore(newCard, pendingColumn.firstChild);
+                
+                // Animação de entrada
+                newCard.style.animation = 'fadeInDown 0.5s ease-in';
+                
+                updateAllColumnCounts();
+            }
+        }
+        
+        function moveOrderCardToColumn(orderCard, newStatus) {
+            const targetColumn = document.querySelector(`#${newStatus} .column-body`);
+            if (targetColumn && orderCard) {
+                targetColumn.appendChild(orderCard);
+            }
+        }
+        
+        function createOrderCard(orderData) {
+            const card = document.createElement('div');
+            card.className = 'order-card';
+            card.draggable = true;
+            card.setAttribute('data-order-id', orderData.order_id);
+            
+            card.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="card-customer">${orderData.customer_name}</div>
+                        <div class="card-product">${orderData.crown_name}</div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li>
+                                <button class="dropdown-item btn-view-details" data-order-id="${orderData.order_id}">
+                                    <i class="fas fa-eye me-2"></i>Ver Detalhes
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer mt-3">
+                    <small>Agora</small>
+                    <div class="order-timer">
+                        <i class="fas fa-clock"></i> <span>00:00:00</span>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function updateAllColumnCounts() {
+            // Atualizar contadores de todas as colunas
+            ['pending', 'in_progress', 'delivered'].forEach(status => {
+                const column = document.getElementById(status);
+                if (column) {
+                    const cards = column.querySelectorAll('.order-card');
+                    const count = cards.length;
+                    const title = column.querySelector('.column-title');
+                    if (title) {
+                        const text = title.textContent;
+                        const newText = text.replace(/\(\d+\)/, `(${count})`);
+                        title.innerHTML = title.innerHTML.replace(text, newText);
                     }
-                })
-                .catch(error => {
-                    console.error('Erro ao verificar atualizações:', error);
-                    showNotification('❌ Erro de conexão', 'warning');
-                });
+                }
+            });
+        }
+        
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return 'Pendente';
+                case 'in_progress': return 'Em Andamento';
+                case 'delivered': return 'Entregue';
+                default: return status;
+            }
         }
         
         function updateOrdersBoard(orders) {
@@ -861,20 +996,8 @@ block content %}
             }, 3000);
         }
         
-        // Iniciar sistema de atualizações em tempo real
-        startRealTimeUpdates();
-        
-        // Pausa/resume baseado na visibilidade da página
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                isPolling = false;
-            } else {
-                setTimeout(() => {
-                    isPolling = false;
-                    startRealTimeUpdates();
-                }, 1000);
-            }
-        });
+        // Inicializar WebSocket
+        initializeSocketIO();
     });
 </script>
 {% endblock %}

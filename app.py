@@ -11,6 +11,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from config import setup_cloudinary
+from flask_socketio import SocketIO
+
 # Configura o sistema de logging
 logging.basicConfig(level=logging.DEBUG)
 
@@ -25,6 +27,15 @@ db = SQLAlchemy(model_class=Base)
 
 # Cria a aplicação Flask
 app = Flask(__name__)
+
+# Inicializa o SocketIO com configurações para produção
+socketio = SocketIO(
+    app, 
+    cors_allowed_origins="*",
+    async_mode='threading',
+    logger=False,
+    engineio_logger=False
+)
 
 # Configura o Cloudinary logo no início, após a criação da app
 setup_cloudinary()

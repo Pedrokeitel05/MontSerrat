@@ -2,7 +2,7 @@ modules = ["web", "python-3.11", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["freetype", "glibcLocales", "openssl", "postgresql"]
+packages = ["freetype", "glibcLocales", "iana-etc", "openssl", "postgresql"]
 
 [deployment]
 deploymentTarget = "autoscale"

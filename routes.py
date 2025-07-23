@@ -1,5 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
-from app import app, db
+from app import app, db, socketio
+from flask_socketio import emit
 from models import Order, FlowerCrown
 from utils.receipt_generator import generate_receipt
 import os
@@ -577,3 +578,150 @@ def export_report():
         mimetype=
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         headers={'Content-Disposition': f'attachment;filename={filename}'})
+
+
+# ============ EVENTOS SOCKETIO PARA TEMPO REAL ============
+
+@socketio.on('connect')
+def handle_connect():
+    """Evento executado quando um cliente se conecta"""
+    print(f'Cliente conectado: {request.sid}')
+    emit('connected', {'message': 'Conectado com sucesso ao servidor'})
+
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Evento executado quando um cliente se desconecta"""
+    print(f'Cliente desconectado: {request.sid}')
+
+
+@socketio.on('join_admin')
+def handle_join_admin():
+    """Permite que admins se juntem a um room específico"""
+    print(f'Admin conectado: {request.sid}')
+    emit('admin_joined', {'message': 'Admin conectado ao sistema de tempo real'})
+
+
+@socketio.on('update_order_status')
+def handle_update_order_status(data):
+    """Processa atualização de status de pedido via WebSocket"""
+    try:
+        order_id = data.get('order_id')
+        new_status = data.get('new_status')
+        
+        if not order_id or not new_status:
+            emit('error', {'message': 'Dados inválidos'})
+            return
+        
+        # Buscar e atualizar o pedido
+        order = Order.query.get(order_id)
+        if not order:
+            emit('error', {'message': 'Pedido não encontrado'})
+            return
+        
+        if new_status not in ['pending', 'in_progress', 'delivered']:
+            emit('error', {'message': 'Status inválido'})
+            return
+        
+        old_status = order.status
+        order.status = new_status
+        db.session.commit()
+        
+        # Emitir atualização para todos os clientes conectados
+        socketio.emit('order_status_updated', {
+            'order_id': order_id,
+            'old_status': old_status,
+            'new_status': new_status,
+            'customer_name': order.customer_name,
+            'timestamp': datetime.now().isoformat()
+        }, broadcast=True)
+        
+        print(f'Status do pedido {order_id} atualizado: {old_status} -> {new_status}')
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f'Erro ao atualizar status do pedido: {e}')
+        emit('error', {'message': f'Erro interno: {str(e)}'})
+
+
+@socketio.on('delete_order')
+def handle_delete_order(data):
+    """Processa exclusão de pedido via WebSocket"""
+    try:
+        order_id = data.get('order_id')
+        
+        if not order_id:
+            emit('error', {'message': 'ID do pedido é obrigatório'})
+            return
+        
+        order = Order.query.get(order_id)
+        if not order:
+            emit('error', {'message': 'Pedido não encontrado'})
+            return
+        
+        customer_name = order.customer_name
+        db.session.delete(order)
+        db.session.commit()
+        
+        # Emitir exclusão para todos os clientes conectados
+        socketio.emit('order_deleted', {
+            'order_id': order_id,
+            'customer_name': customer_name,
+            'timestamp': datetime.now().isoformat()
+        }, broadcast=True)
+        
+        print(f'Pedido {order_id} ({customer_name}) foi excluído')
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f'Erro ao excluir pedido: {e}')
+        emit('error', {'message': f'Erro interno: {str(e)}'})
+
+
+@socketio.on('new_order_created')
+def handle_new_order(data):
+    """Notifica sobre novo pedido criado"""
+    try:
+        order_id = data.get('order_id')
+        
+        if order_id:
+            order = Order.query.get(order_id)
+            if order:
+                # Emitir novo pedido para todos os clientes conectados
+                socketio.emit('new_order_notification', {
+                    'order_id': order.id,
+                    'customer_name': order.customer_name,
+                    'crown_name': order.crown_name,
+                    'total_amount': float(order.total_amount),
+                    'timestamp': datetime.now().isoformat()
+                }, broadcast=True)
+                
+                print(f'Novo pedido criado: {order_id} - {order.customer_name}')
+        
+    except Exception as e:
+        print(f'Erro ao processar novo pedido: {e}')
+
+
+# Função auxiliar para emitir estatísticas atualizadas
+def emit_updated_statistics():
+    """Emite estatísticas atualizadas para todos os clientes"""
+    try:
+        orders = Order.query.all()
+        today = datetime.now().date()
+        
+        today_orders = [o for o in orders if o.order_date and o.order_date.date() == today]
+        completed_orders = [o for o in orders if o.status == 'delivered']
+        
+        statistics = {
+            'total_orders': len(orders),
+            'today_orders': len(today_orders),
+            'completed_orders': len(completed_orders),
+            'pending_orders': len([o for o in orders if o.status == 'pending']),
+            'in_progress_orders': len([o for o in orders if o.status == 'in_progress']),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        socketio.emit('statistics_updated', statistics, broadcast=True)
+        
+    except Exception as e:
+        print(f'Erro ao emitir estatísticas: {e}')

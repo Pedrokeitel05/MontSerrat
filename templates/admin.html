@@ -116,6 +116,8 @@
 </div>
 
 {% include 'includes/_admin_modals.html' %} {% endblock %} {% block scripts %}
+<!-- Socket.IO Client -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 {{ super() }}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -352,40 +354,78 @@
             p.addEventListener("input", () => formatCurrency(p));
         });
 
-        // Sistema de atualizações em tempo real usando polling
-        let lastUpdateTimestamp = null;
-        let isPolling = false;
+        // Sistema de atualizações em tempo real usando WebSockets
+        const socket = io();
+        let isConnected = false;
         
-        function startRealTimeUpdates() {
-            if (isPolling) return;
-            isPolling = true;
+        function initializeSocketIO() {
+            // Eventos de conexão
+            socket.on('connect', function() {
+                isConnected = true;
+                console.log('Conectado ao servidor WebSocket');
+                showConnectionStatus('✓ WebSocket conectado', 'success');
+                
+                // Entrar no room de admin
+                socket.emit('join_admin');
+            });
             
-            // Mostrar indicador de conexão
-            showConnectionStatus('Atualizações em tempo real ativadas', 'success');
+            socket.on('disconnect', function() {
+                isConnected = false;
+                console.log('Desconectado do servidor WebSocket');
+                showConnectionStatus('⚠️ WebSocket desconectado - tentando reconectar...', 'warning');
+            });
             
-            // Polling a cada 3 segundos
-            setInterval(checkForUpdates, 3000);
+            socket.on('admin_joined', function(data) {
+                console.log('Admin conectado:', data.message);
+            });
             
-            // Primeira verificação imediata
-            checkForUpdates();
+            // Eventos de atualização de pedidos
+            socket.on('order_status_updated', function(data) {
+                console.log('Status de pedido atualizado:', data);
+                showNotification(
+                    `📋 ${data.customer_name}: Status alterado para ${getStatusText(data.new_status)}`, 
+                    'info'
+                );
+                updateStatisticsFromSocket();
+            });
+            
+            socket.on('order_deleted', function(data) {
+                console.log('Pedido excluído:', data);
+                showNotification(`🗑️ Pedido de ${data.customer_name} foi excluído`, 'warning');
+                updateStatisticsFromSocket();
+            });
+            
+            socket.on('new_order_notification', function(data) {
+                console.log('Novo pedido:', data);
+                showNotification(
+                    `🆕 Novo pedido: ${data.customer_name} - ${data.crown_name}`, 
+                    'success'
+                );
+                updateStatisticsFromSocket();
+            });
+            
+            socket.on('statistics_updated', function(data) {
+                console.log('Estatísticas atualizadas:', data);
+                updateStatisticsDisplay(data);
+            });
+            
+            socket.on('error', function(data) {
+                console.error('Erro do WebSocket:', data);
+                showNotification(`❌ Erro: ${data.message}`, 'danger');
+            });
         }
         
-        function checkForUpdates() {
+        function updateStatisticsFromSocket() {
+            // Fazer uma requisição para obter as estatísticas atualizadas
             fetch('/api/orders-status')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         updateStatistics(data.orders);
-                        
-                        // Se há atualizações (baseado no timestamp)
-                        if (lastUpdateTimestamp && data.timestamp !== lastUpdateTimestamp) {
-                            showNotification('Dados atualizados', 'info');
-                        }
-                        lastUpdateTimestamp = data.timestamp;
                     }
                 })
                 .catch(error => {
-                    console.error('Erro ao verificar atualizações:', error);
+                    console.error('Erro ao obter estatísticas:', error);
                 });
         }
         
@@ -401,8 +441,41 @@
             const todayCountEl = document.querySelector('.stat-card:nth-child(2) h3');
             const completedCountEl = document.querySelector('.stat-card:nth-child(3) h3');
             
-            if (todayCountEl) todayCountEl.textContent = todayOrders.length;
-            if (completedCountEl) completedCountEl.textContent = completedOrders.length;
+            if (todayCountEl) {
+                todayCountEl.textContent = todayOrders.length;
+                todayCountEl.style.color = '#28a745';
+                setTimeout(() => todayCountEl.style.color = '', 1000);
+            }
+            if (completedCountEl) {
+                completedCountEl.textContent = completedOrders.length;
+                completedCountEl.style.color = '#28a745';
+                setTimeout(() => completedCountEl.style.color = '', 1000);
+            }
+        }
+        
+        function updateStatisticsDisplay(stats) {
+            const todayCountEl = document.querySelector('.stat-card:nth-child(2) h3');
+            const completedCountEl = document.querySelector('.stat-card:nth-child(3) h3');
+            
+            if (todayCountEl) {
+                todayCountEl.textContent = stats.today_orders;
+                todayCountEl.style.color = '#28a745';
+                setTimeout(() => todayCountEl.style.color = '', 1000);
+            }
+            if (completedCountEl) {
+                completedCountEl.textContent = stats.completed_orders;
+                completedCountEl.style.color = '#28a745';
+                setTimeout(() => completedCountEl.style.color = '', 1000);
+            }
+        }
+        
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return 'Pendente';
+                case 'in_progress': return 'Em Progresso';
+                case 'delivered': return 'Entregue';
+                default: return status;
+            }
         }
         
         function showNotification(message, type = 'info') {
@@ -442,20 +515,11 @@
             setTimeout(() => statusEl.remove(), 3000);
         }
         
-        // Iniciar sistema de atualizações em tempo real quando a página carregar
-        startRealTimeUpdates();
+        // Inicializar WebSocket
+        initializeSocketIO();
         
-        // Listener para visibilidade da página (pausa quando não está visível)
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                isPolling = false;
-            } else {
-                setTimeout(() => {
-                    isPolling = false;
-                    startRealTimeUpdates();
-                }, 1000);
-            }
-        });
+        // Primeira atualização das estatísticas
+        updateStatisticsFromSocket();
     });
 </script>
 {% endblock %}

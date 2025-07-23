@@ -99,15 +99,16 @@ This is a Flask-based web application for a funeral home's flower crown ordering
   - Implemented smooth theme transitions with CSS variables
   - Added localStorage persistence for theme preference
 - July 23, 2025. Real-time order management system implementation
-  - Removed Flask-SocketIO dependency due to WebSocket configuration issues
-  - Implemented real-time updates using AJAX polling every 3-5 seconds
-  - Added /api/orders-status endpoint for real-time data fetching
-  - Enhanced admin panel with live statistics updates
-  - Added order management page with real-time notifications
+  - Implemented Flask-SocketIO with threading async mode for WebSocket support
+  - Added WebSocket events for real-time order status updates and notifications
+  - Created comprehensive SocketIO event handlers (connect, disconnect, order updates, deletions)
+  - Enhanced admin panel with WebSocket-based live statistics updates
+  - Added order management page with real-time WebSocket notifications
   - Implemented connection status indicators and error handling
   - Added visual notifications for order status changes and new orders
   - Integrated notification sound system for order updates
-  - Added page visibility detection to pause polling when not visible
+  - Added real-time board updates with smooth animations for order movements
+  - Created automatic column count updates and visual feedback systems
 
 ## User Preferences
 
