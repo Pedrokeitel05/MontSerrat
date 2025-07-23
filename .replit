@@ -6,7 +6,8 @@ packages = ["freetype", "glibcLocales", "openssl", "postgresql"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+# --- CORREÇÃO: Voltando a apontar para 'main:app' ---
+run = ["gunicorn", "main:app", "-b", "0.0.0.0:5000", "-k", "gevent"]
 
 [workflows]
 runButton = "Project"
@@ -26,7 +27,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
+# --- CORREÇÃO: Voltando a apontar para 'main:app' ---
+args = "gunicorn main:app -b 0.0.0.0:5000 -k gevent --reload"
 waitForPort = 5000
 
 [[ports]]

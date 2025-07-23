@@ -2867,3 +2867,25 @@ body {
     background-color: var(--bg-tertiary);
     cursor: pointer;
 }
+
+/* static/css/style.css */
+
+/* ================================================================= */
+/* ESTILOS PARA A LUPA DE ZOOM NA IMAGEM                             */
+/* ================================================================= */
+
+.preview-container canvas {
+    cursor: zoom-in;
+    /* Transforma o cursor numa lupa ao passar sobre o canvas */
+}
+
+/* ================================================= */
+/* CORREÇÃO PARA O ÍCONE DO MENU DO CARTÃO           */
+/* ================================================= */
+.order-card .btn-icon i {
+    color: var(--text-muted);
+}
+
+.order-card .btn-icon:hover i {
+    color: var(--text-primary);
+}

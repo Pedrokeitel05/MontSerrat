@@ -169,6 +169,23 @@ def payment_success():
             db.session.add(order)
             db.session.commit()
 
+            # Prepara os dados do novo pedido para enviar em tempo real
+            order_data = {
+                "id":
+                order.id,
+                "customer_name":
+                order.customer_name,
+                "crown_name":
+                order.crown_name,
+                "order_date_formatted":
+                (order.order_date -
+                 timedelta(hours=3)).strftime('%d/%m/%Y %H:%M'),
+                "order_date_iso":
+                order.order_date.isoformat() + "Z"
+            }
+            # Emite um evento 'order_created' para todos os clientes conectados
+            socketio.emit('order_created', order_data)
+
             session['last_order_id'] = order.id
 
             # --- CORREÇÃO APLICADA AQUI ---
@@ -355,56 +372,69 @@ def move_crown(crown_id, direction):
 @app.route('/admin/orders')
 @login_required
 def order_management():
-    # --- LÓGICA DE FUSO HORÁRIO CORRIGIDA ---
-    # Pega na hora atual do servidor (UTC)
+    """
+    Função atualizada para exibir:
+    - Todos os pedidos pendentes e em andamento (independentemente da data).
+    - Apenas os pedidos entregues no dia de hoje.
+    """
+    # 1. Busca todos os pedidos que ainda precisam de atenção (pendentes e em andamento).
+    #    Estes não têm filtro de data.
+    orders_pending = Order.query.filter_by(status='pending').order_by(
+        Order.order_date.asc()).all()
+    orders_in_progress = Order.query.filter_by(status='in_progress').order_by(
+        Order.order_date.asc()).all()
+
+    # 2. Lógica de fuso horário para buscar apenas os pedidos entregues HOJE.
     now_utc = datetime.utcnow()
-
-    # Ajusta para o fuso horário do Brasil (UTC-3)
     now_brt = now_utc - timedelta(hours=3)
-
-    # Define o início e o fim do "hoje" no fuso horário do Brasil
     start_of_day_brt = datetime.combine(now_brt.date(), datetime.min.time())
     end_of_day_brt = datetime.combine(now_brt.date(), datetime.max.time())
-
-    # Converte estes limites de volta para UTC para fazer a consulta na base de dados
     start_of_day_utc = start_of_day_brt + timedelta(hours=3)
     end_of_day_utc = end_of_day_brt + timedelta(hours=3)
 
-    # A consulta agora usa os limites corretos para buscar apenas os pedidos de "hoje"
-    todays_orders = Order.query.filter(
-        Order.order_date >= start_of_day_utc, Order.order_date
+    # 3. Busca os pedidos com status 'delivered' APENAS dentro do intervalo de hoje.
+    orders_delivered = Order.query.filter(
+        Order.status == 'delivered', Order.order_date >= start_of_day_utc,
+        Order.order_date
         <= end_of_day_utc).order_by(Order.order_date.desc()).all()
-    # --- FIM DA CORREÇÃO ---
 
-    orders_pending = [o for o in todays_orders if o.status == 'pending']
-    orders_in_progress = [
-        o for o in todays_orders if o.status == 'in_progress'
-    ]
-    orders_delivered = [o for o in todays_orders if o.status == 'delivered']
-
+    # 4. Envia as listas de pedidos para o template renderizar.
     return render_template('orders.html',
                            pending=orders_pending,
                            in_progress=orders_in_progress,
                            delivered=orders_delivered)
 
 
-@app.route('/admin/order/update_status/<int:order_id>', methods=['POST'])
+@app.route('/api/orders-status')
 @login_required
-def update_order_status(order_id):
-    order = Order.query.get_or_404(order_id)
-    new_status = request.json.get('status')
-    if new_status not in ['pending', 'in_progress', 'delivered']:
-        return jsonify({'success': False, 'message': 'Status inválido.'}), 400
+def orders_status_api():
+    """API endpoint para obter dados dos pedidos em tempo real"""
     try:
-        order.status = new_status
-        db.session.commit()
+        orders = Order.query.order_by(Order.order_date.desc()).all()
+        
+        orders_data = []
+        for order in orders:
+            orders_data.append({
+                'id': order.id,
+                'customer_name': order.customer_name,
+                'crown_name': order.crown_name,
+                'total_amount': float(order.total_amount),
+                'status': order.status,
+                'order_date': order.order_date.isoformat() if order.order_date else None,
+                'payment_method': order.payment_method
+            })
+        
         return jsonify({
             'success': True,
-            'message': 'Status do pedido atualizado.'
+            'orders': orders_data,
+            'total_count': len(orders_data),
+            'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 
 @app.route('/admin/reports')
@@ -547,48 +577,3 @@ def export_report():
         mimetype=
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         headers={'Content-Disposition': f'attachment;filename={filename}'})
-
-
-@app.route('/admin/order/delete/<int:order_id>', methods=['POST'])
-@login_required
-def delete_order(order_id):
-    """Apaga um pedido do banco de dados."""
-    order = Order.query.get_or_404(order_id)
-    try:
-        db.session.delete(order)
-        db.session.commit()
-        return jsonify({
-            'success': True,
-            'message': f'Pedido #{order.id} cancelado com sucesso.'
-        })
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-
-@app.route('/api/new-orders')
-@login_required
-def get_new_orders():
-    """Retorna pedidos novos (status='pending') que ainda não estão na página."""
-    latest_id = request.args.get('latest_id', 0, type=int)
-
-    new_orders_query = Order.query.filter(Order.id > latest_id,
-                                          Order.status == 'pending').order_by(
-                                              Order.id.asc()).all()
-
-    new_orders_list = []
-    for order in new_orders_query:
-        new_orders_list.append({
-            "id":
-            order.id,
-            "customer_name":
-            order.customer_name,
-            "crown_name":
-            order.crown_name,
-            "order_date_formatted":
-            order.order_date.strftime('%d/%m/%Y %H:%M'),
-            "order_date_iso":
-            order.order_date.isoformat() + "Z"
-        })
-
-    return jsonify(new_orders_list)

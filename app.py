@@ -1,11 +1,16 @@
+from gevent import monkey
+monkey.patch_all()
+
+from psycogreen.gevent import patch_psycopg
+patch_psycopg()
+
 import os
 import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
-from config import setup_cloudinary  # Importa a nossa nova função
-
+from config import setup_cloudinary
 # Configura o sistema de logging
 logging.basicConfig(level=logging.DEBUG)
 

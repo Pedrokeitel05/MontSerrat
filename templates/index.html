@@ -303,6 +303,107 @@ Serrat{% endblock %} {% block content %}
         const ctx = canvas.getContext("2d");
         let currentCrownImage = null;
 
+        const magnifier = {
+            active: false,
+            size: 120, // Tamanho da lente em pixels
+            zoom: 2.5, // Nível de ampliação
+            x: 0, // Posição X do cursor/toque
+            y: 0, // Posição Y do cursor/toque
+            canvasRect: null, // Armazena as dimensões do canvas
+        };
+
+        function getMousePos(evt) {
+            magnifier.canvasRect = canvas.getBoundingClientRect();
+            return {
+                x: evt.clientX - magnifier.canvasRect.left,
+                y: evt.clientY - magnifier.canvasRect.top,
+            };
+        }
+
+        function getTouchPos(evt) {
+            magnifier.canvasRect = canvas.getBoundingClientRect();
+            return {
+                x: evt.touches[0].clientX - magnifier.canvasRect.left,
+                y: evt.touches[0].clientY - magnifier.canvasRect.top,
+            };
+        }
+
+        function drawMagnifier() {
+            if (!magnifier.active || !currentCrownImage) return;
+
+            // 1. Redesenha a imagem original completa para limpar a lente anterior
+            updatePreview();
+
+            // 2. Prepara a lente circular
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(
+                magnifier.x,
+                magnifier.y,
+                magnifier.size / 2,
+                0,
+                Math.PI * 2,
+            );
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+            ctx.stroke();
+            ctx.clip();
+
+            // 3. Calcula a porção da imagem a ser ampliada
+            const zoomX =
+                magnifier.x * (currentCrownImage.width / canvas.width) -
+                magnifier.size / 2 / magnifier.zoom;
+            const zoomY =
+                magnifier.y * (currentCrownImage.height / canvas.height) -
+                magnifier.size / 2 / magnifier.zoom;
+            const zoomWidth = magnifier.size / magnifier.zoom;
+            const zoomHeight = magnifier.size / magnifier.zoom;
+
+            // 4. Desenha a imagem ampliada dentro da lente
+            ctx.drawImage(
+                currentCrownImage,
+                zoomX,
+                zoomY, // Ponto de origem na imagem original
+                zoomWidth,
+                zoomHeight, // Tamanho da área a ser copiada
+                magnifier.x - magnifier.size / 2,
+                magnifier.y - magnifier.size / 2, // Posição no canvas
+                magnifier.size,
+                magnifier.size, // Tamanho da imagem ampliada
+            );
+
+            ctx.restore();
+        }
+
+        // Eventos para Computador (Mouse)
+        canvas.addEventListener("mousemove", function (e) {
+            magnifier.active = true;
+            const pos = getMousePos(e);
+            magnifier.x = pos.x;
+            magnifier.y = pos.y;
+            drawMagnifier();
+        });
+
+        canvas.addEventListener("mouseleave", function () {
+            magnifier.active = false;
+            updatePreview(); // Limpa a lente quando o rato sai
+        });
+
+        // Eventos para Telemóvel (Toque)
+        canvas.addEventListener("touchmove", function (e) {
+            e.preventDefault(); // Impede a página de rolar
+            magnifier.active = true;
+            const pos = getTouchPos(e);
+            magnifier.x = pos.x;
+            magnifier.y = pos.y;
+            drawMagnifier();
+        });
+
+        canvas.addEventListener("touchend", function () {
+            magnifier.active = false;
+            updatePreview(); // Limpa a lente ao soltar o dedo
+        });
+
         const ribbonImage = new Image();
         ribbonImage.src = "{{ url_for('static', filename='img/faixa.png') }}";
 

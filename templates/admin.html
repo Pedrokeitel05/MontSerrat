@@ -351,6 +351,111 @@
         document.querySelectorAll('input[name="price"]').forEach((p) => {
             p.addEventListener("input", () => formatCurrency(p));
         });
+
+        // Sistema de atualizações em tempo real usando polling
+        let lastUpdateTimestamp = null;
+        let isPolling = false;
+        
+        function startRealTimeUpdates() {
+            if (isPolling) return;
+            isPolling = true;
+            
+            // Mostrar indicador de conexão
+            showConnectionStatus('Atualizações em tempo real ativadas', 'success');
+            
+            // Polling a cada 3 segundos
+            setInterval(checkForUpdates, 3000);
+            
+            // Primeira verificação imediata
+            checkForUpdates();
+        }
+        
+        function checkForUpdates() {
+            fetch('/api/orders-status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateStatistics(data.orders);
+                        
+                        // Se há atualizações (baseado no timestamp)
+                        if (lastUpdateTimestamp && data.timestamp !== lastUpdateTimestamp) {
+                            showNotification('Dados atualizados', 'info');
+                        }
+                        lastUpdateTimestamp = data.timestamp;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao verificar atualizações:', error);
+                });
+        }
+        
+        function updateStatistics(orders) {
+            // Atualizar estatísticas na interface
+            const today = new Date().toDateString();
+            const todayOrders = orders.filter(order => 
+                new Date(order.order_date).toDateString() === today
+            );
+            const completedOrders = orders.filter(order => order.status === 'delivered');
+            
+            // Atualizar contadores
+            const todayCountEl = document.querySelector('.stat-card:nth-child(2) h3');
+            const completedCountEl = document.querySelector('.stat-card:nth-child(3) h3');
+            
+            if (todayCountEl) todayCountEl.textContent = todayOrders.length;
+            if (completedCountEl) completedCountEl.textContent = completedOrders.length;
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Remover notificações anteriores
+            const existingNotifications = document.querySelectorAll('.realtime-notification');
+            existingNotifications.forEach(n => n.remove());
+            
+            // Criar nova notificação
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} realtime-notification position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; opacity: 0; transition: opacity 0.3s ease;';
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'info' ? 'info' : 'exclamation'} me-2"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Mostrar com animação
+            setTimeout(() => notification.style.opacity = '1', 100);
+            
+            // Auto-remover após 3 segundos
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        function showConnectionStatus(message, type) {
+            const statusEl = document.createElement('div');
+            statusEl.className = `badge bg-${type} position-fixed`;
+            statusEl.style.cssText = 'top: 10px; left: 50%; transform: translateX(-50%); z-index: 9999;';
+            statusEl.innerHTML = `<i class="fas fa-wifi me-1"></i>${message}`;
+            
+            document.body.appendChild(statusEl);
+            
+            setTimeout(() => statusEl.remove(), 3000);
+        }
+        
+        // Iniciar sistema de atualizações em tempo real quando a página carregar
+        startRealTimeUpdates();
+        
+        // Listener para visibilidade da página (pausa quando não está visível)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                isPolling = false;
+            } else {
+                setTimeout(() => {
+                    isPolling = false;
+                    startRealTimeUpdates();
+                }, 1000);
+            }
+        });
     });
 </script>
 {% endblock %}

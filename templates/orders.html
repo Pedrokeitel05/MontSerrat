@@ -85,7 +85,7 @@ block content %}
                         <small>{{ order.order_date|localtime }}</small>
                         <div
                             class="order-timer"
-                            data-order-date="{{ order.order_date.isoformat() }}"
+                            data-order-date="{{ order.order_date.isoformat() }}Z"
                         >
                             <i class="fas fa-clock"></i> <span>--:--:--</span>
                         </div>
@@ -175,7 +175,7 @@ block content %}
                         <small>{{ order.order_date|localtime }}</small>
                         <div
                             class="order-timer"
-                            data-order-date="{{ order.order_date.isoformat() }}"
+                            data-order-date="{{ order.order_date.isoformat() }}Z"
                         >
                             <i class="fas fa-clock"></i> <span>--:--:--</span>
                         </div>
@@ -266,17 +266,11 @@ block content %}
     </div>
 </div>
 
-<div
-    class="modal fade"
-    id="orderDetailsModal"
-    tabindex="-1"
-    aria-labelledby="orderDetailsModalLabel"
-    aria-hidden="true"
->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="orderDetailsModalLabel">
+                <h5 class="modal-title">
                     Detalhes do Pedido
                     <span
                         id="modal-order-id"
@@ -365,9 +359,9 @@ block content %}
             </div>
             <div class="modal-footer justify-content-between">
                 <small class="text-muted"
-                    >Pedido realizado em: <span id="modal-order-date"></span
-                ></small>
-                <button
+                    >Pedido realizado em:
+                    <span id="modal-order-date"></span></small
+                ><button
                     type="button"
                     class="btn btn-secondary"
                     data-bs-dismiss="modal"
@@ -379,123 +373,171 @@ block content %}
     </div>
 </div>
 {% endblock %} {% block scripts %} {{ super() }}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        const socket = io();
         const notificationSound = document.getElementById("notification-sound");
         let audioUnlocked = false;
+        let draggedCard = null;
 
-        function unlockAudio() {
-            if (!audioUnlocked) {
-                notificationSound.volume = 0;
-                notificationSound.play().catch(() => {});
-                notificationSound.pause();
-                notificationSound.currentTime = 0;
-                notificationSound.volume = 1;
-                audioUnlocked = true;
-                document.body.removeEventListener("click", unlockAudio);
-            }
-        }
-        document.body.addEventListener("click", unlockAudio);
-
-        async function checkForNewOrders() {
-            const allPendingCards = document.querySelectorAll(
-                "#pending .order-card",
+        // --- LÓGICA DE TEMPO REAL (SOCKET.IO) ---
+        socket.on("connect", () => console.log("Conectado ao servidor!"));
+        socket.on("order_created", (order) => {
+            if (
+                document.querySelector(
+                    `.order-card[data-order-id='${order.id}']`,
+                )
+            )
+                return;
+            if (audioUnlocked) notificationSound.play();
+            addOrderCardToBoard(order);
+            showToast(`Novo pedido #${order.id} recebido!`, "info");
+        });
+        socket.on("order_updated", (data) => {
+            const card = document.querySelector(
+                `.order-card[data-order-id='${data.order_id}']`,
             );
-            let latestId = 0;
-            if (allPendingCards.length > 0) {
-                const ids = Array.from(allPendingCards).map((c) =>
-                    parseInt(c.dataset.orderId, 10),
-                );
-                latestId = Math.max(...ids);
+            if (card) moveCardDOM(card, data.new_status);
+        });
+        socket.on("order_deleted", (data) => {
+            const card = document.querySelector(
+                `.order-card[data-order-id='${data.order_id}']`,
+            );
+            if (card) removeCardDOM(card);
+        });
+
+        // --- FUNÇÕES DE MANIPULAÇÃO DA INTERFACE (DOM) ---
+        function moveCardDOM(card, newStatus) {
+            const sourceColumn = card.closest(".order-column");
+            const targetColumn = document.getElementById(newStatus);
+            if (!targetColumn || !sourceColumn || sourceColumn.id === newStatus)
+                return;
+
+            const targetColumnBody = targetColumn.querySelector(".column-body");
+
+            card.style.opacity = "0";
+            setTimeout(() => {
+                targetColumnBody.prepend(card);
+                updateColumnTitle(sourceColumn.id, -1);
+                updateColumnTitle(newStatus, 1);
+                updateCardContent(card, newStatus);
+                card.style.opacity = "1";
+            }, 300);
+        }
+
+        function removeCardDOM(card) {
+            const columnId = card.closest(".order-column").id;
+            card.remove();
+            updateColumnTitle(columnId, -1);
+        }
+
+        function updateCardContent(card, status) {
+            const orderId = card.dataset.orderId;
+            const timerDiv = card.querySelector(".order-timer");
+            if (status === "delivered") {
+                timerDiv.classList.add("final-status");
+                timerDiv.innerHTML =
+                    '<i class="fas fa-check-double"></i> <span>Concluído</span>';
+            } else {
+                timerDiv.classList.remove("final-status");
+                timerDiv.innerHTML =
+                    '<i class="fas fa-clock"></i> <span>--:--:--</span>';
             }
 
-            try {
-                const response = await fetch(
-                    `/api/new-orders?latest_id=${latestId}`,
-                );
-                if (!response.ok) return;
-                const newOrders = await response.json();
+            const dropdownContainer = card.querySelector(".dropdown");
+            let menuItems = `<li><button class="dropdown-item btn-view-details" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" data-order-id="${orderId}"><i class="fas fa-eye me-2"></i>Ver Detalhes</button></li><li><hr class="dropdown-divider"></li>`;
+            if (status === "pending") {
+                menuItems += `<li><button class="dropdown-item btn-change-status" data-next-status="in_progress"><i class="fas fa-arrow-right me-2"></i>Avançar Etapa</button></li>`;
+            } else if (status === "in_progress") {
+                menuItems += `<li><button class="dropdown-item btn-change-status" data-next-status="pending"><i class="fas fa-arrow-left me-2"></i>Retroceder Etapa</button></li><li><button class="dropdown-item btn-change-status" data-next-status="delivered"><i class="fas fa-arrow-right me-2"></i>Avançar Etapa</button></li>`;
+            } else if (status === "delivered") {
+                menuItems += `<li><button class="dropdown-item btn-change-status" data-next-status="in_progress"><i class="fas fa-arrow-left me-2"></i>Retroceder Etapa</button></li>`;
+            }
+            menuItems += `<li><hr class="dropdown-divider"></li><li><button class="dropdown-item btn-cancel-order text-danger" data-order-id="${orderId}"><i class="fas fa-trash-alt me-2"></i>Cancelar Pedido</button></li>`;
 
-                if (newOrders.length > 0) {
-                    if (audioUnlocked) {
-                        notificationSound.play();
+            dropdownContainer.innerHTML = `<button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-ellipsis-v"></i></button><ul class="dropdown-menu dropdown-menu-dark">${menuItems}</ul>`;
+
+            addEventListenersToCard(card);
+            new bootstrap.Dropdown(
+                dropdownContainer.querySelector('[data-bs-toggle="dropdown"]'),
+            );
+        }
+
+        // --- FUNÇÕES DE COMUNICAÇÃO COM O SERVIDOR ---
+        function sendStatusUpdate(orderId, newStatus) {
+            socket.emit("update_order_status", {
+                order_id: orderId,
+                new_status: newStatus,
+            });
+        }
+        function sendDeleteOrder(orderId) {
+            socket.emit("delete_order", { order_id: orderId });
+        }
+
+        // --- FUNÇÕES DE EVENTOS DO UTILIZADOR ---
+        function onChangeStatusClick(e) {
+            e.stopPropagation();
+            const card = this.closest(".order-card");
+            moveCardDOM(card, this.dataset.nextStatus);
+            sendStatusUpdate(card.dataset.orderId, this.dataset.nextStatus);
+        }
+
+        function onCancelOrderClick(e) {
+            e.stopPropagation();
+            const card = this.closest(".order-card");
+            if (
+                confirm(
+                    `Tem a certeza de que quer cancelar o Pedido #${card.dataset.orderId}?`,
+                )
+            ) {
+                removeCardDOM(card);
+                sendDeleteOrder(card.dataset.orderId);
+                showToast(
+                    `Pedido #${card.dataset.orderId} foi removido.`,
+                    "warning",
+                );
+            }
+        }
+
+        // --- LÓGICA DE DRAG AND DROP ---
+        function onDragStart(event) {
+            draggedCard = event.target.closest(".order-card");
+            setTimeout(() => draggedCard.classList.add("dragging"), 0);
+        }
+        function onDragEnd() {
+            if (draggedCard) draggedCard.classList.remove("dragging");
+            draggedCard = null;
+        }
+        document.querySelectorAll(".order-column").forEach((column) => {
+            column.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(
+                    column.querySelector(".column-body"),
+                    e.clientY,
+                );
+                if (draggedCard) {
+                    if (afterElement == null) {
+                        column
+                            .querySelector(".column-body")
+                            .appendChild(draggedCard);
+                    } else {
+                        column
+                            .querySelector(".column-body")
+                            .insertBefore(draggedCard, afterElement);
                     }
-                    newOrders.forEach(addOrderCardToBoard);
-                    updateColumnTitle("pending", newOrders.length);
-                    showToast(
-                        `${newOrders.length} novo(s) pedido(s) recebido(s)!`,
-                        "info",
-                    );
                 }
-            } catch (error) {
-                console.error("Erro ao verificar novos pedidos:", error);
-            }
-        }
+            });
+            column.addEventListener("drop", (e) => {
+                e.preventDefault();
+                if (!draggedCard) return;
+                const newStatus = column.dataset.status;
+                moveCardDOM(draggedCard, newStatus);
+                sendStatusUpdate(draggedCard.dataset.orderId, newStatus);
+            });
+        });
 
-        function addOrderCardToBoard(order) {
-            const columnBody = document.querySelector("#pending .column-body");
-            if (!columnBody) return;
-
-            const cardHTML = `
-                <div class="order-card" draggable="true" data-order-id="${order.id}" style="animation: fadeInDown 0.5s ease;">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="card-customer">${order.customer_name}</div>
-                            <div class="card-product">${order.crown_name}</div>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-dark">
-                                <li><button class="dropdown-item btn-view-details" data-bs-toggle="modal" data-bs-target="#orderDetailsModal" data-order-id="${order.id}"><i class="fas fa-eye me-2"></i>Ver Detalhes</button></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><button class="dropdown-item btn-change-status" data-next-status="in_progress"><i class="fas fa-arrow-right me-2"></i>Avançar Etapa</button></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><button class="dropdown-item btn-cancel-order text-danger" data-order-id="${order.id}"><i class="fas fa-trash-alt me-2"></i>Cancelar Pedido</button></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="card-footer mt-3">
-                        <small>${order.order_date_formatted}</small>
-                        <div class="order-timer" data-order-date="${order.order_date_iso}">
-                            <i class="fas fa-clock"></i> <span>--:--:--</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            columnBody.insertAdjacentHTML("afterbegin", cardHTML);
-            const newCard = columnBody.firstChild;
-            addEventListenersToCard(newCard);
-        }
-
-        setInterval(checkForNewOrders, 10000);
-
-        async function changeOrderStatus(orderId, newStatus) {
-            try {
-                const response = await fetch(
-                    `/admin/order/update_status/${orderId}`,
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: newStatus }),
-                    },
-                );
-                const result = await response.json();
-                if (result.success) {
-                    showToast("Status do pedido atualizado!", "success");
-                    location.reload();
-                } else {
-                    showToast(
-                        result.message || "Erro ao atualizar status.",
-                        "danger",
-                    );
-                }
-            } catch (error) {
-                showToast("Erro de comunicação.", "danger");
-            }
-        }
-
+        // --- FUNÇÕES AUXILIARES E DE INICIALIZAÇÃO ---
         function addEventListenersToCard(card) {
             card.addEventListener("dragstart", onDragStart);
             card.addEventListener("dragend", onDragEnd);
@@ -508,174 +550,58 @@ block content %}
             );
         }
 
-        let draggedCard = null;
-
-        function onDragStart(event) {
-            draggedCard = event.target.closest(".order-card");
-            setTimeout(() => draggedCard.classList.add("dragging"), 0);
-        }
-
-        function onDragEnd() {
-            if (draggedCard) draggedCard.classList.remove("dragging");
-            draggedCard = null;
-        }
-
         document
             .querySelectorAll(".order-card")
-            .forEach(addEventListenersToCard);
+            .forEach((card) => addEventListenersToCard(card));
 
-        document.querySelectorAll(".order-column").forEach((column) => {
-            column.addEventListener("dragover", (e) => {
-                e.preventDefault();
-                const afterElement = getDragAfterElement(column, e.clientY);
-                const columnBody = column.querySelector(".column-body");
-                if (afterElement == null) {
-                    if (draggedCard) columnBody.appendChild(draggedCard);
-                } else {
-                    if (draggedCard)
-                        columnBody.insertBefore(draggedCard, afterElement);
-                }
-            });
-
-            column.addEventListener("drop", (e) => {
-                e.preventDefault();
-                if (!draggedCard) return;
-                const newStatus = column.dataset.status;
-                const orderId = draggedCard.dataset.orderId;
-                changeOrderStatus(orderId, newStatus);
-            });
+        const detailsModal = new bootstrap.Modal(
+            document.getElementById("orderDetailsModal"),
+        );
+        document.body.addEventListener("click", function (event) {
+            if (event.target.matches(".btn-view-details")) {
+                const orderId = event.target.dataset.orderId;
+                openDetailsModal(orderId);
+            }
         });
 
-        function getDragAfterElement(column, y) {
-            const draggableElements = [
-                ...column.querySelectorAll(".order-card:not(.dragging)"),
-            ];
-            return draggableElements.reduce(
-                (closest, child) => {
-                    const box = child.getBoundingClientRect();
-                    const offset = y - box.top - box.height / 2;
-                    if (offset < 0 && offset > closest.offset) {
-                        return { offset: offset, element: child };
-                    } else {
-                        return closest;
-                    }
-                },
-                { offset: Number.NEGATIVE_INFINITY },
-            ).element;
-        }
-
-        function onChangeStatusClick(e) {
-            e.stopPropagation();
-            const card = this.closest(".order-card");
-            const orderId = card.dataset.orderId;
-            const nextStatus = this.dataset.nextStatus;
-            changeOrderStatus(orderId, nextStatus);
-        }
-
-        async function onCancelOrderClick(e) {
-            e.stopPropagation();
-            const orderId = this.dataset.orderId;
-
-            if (
-                confirm(
-                    `Tem a certeza que quer cancelar o Pedido #${orderId}? Esta ação não pode ser desfeita.`,
-                )
-            ) {
-                try {
-                    const response = await fetch(
-                        `/admin/order/delete/${orderId}`,
-                        { method: "POST" },
-                    );
-                    const result = await response.json();
-
-                    if (result.success) {
-                        showToast(result.message, "success");
-                        const cardToRemove = document.querySelector(
-                            `.order-card[data-order-id='${orderId}']`,
-                        );
-                        if (cardToRemove) {
-                            const columnId =
-                                cardToRemove.closest(".order-column").id;
-                            cardToRemove.remove();
-                            updateColumnTitle(columnId, -1);
-                        }
-                    } else {
-                        showToast(result.message, "danger");
-                    }
-                } catch (error) {
-                    showToast(
-                        "Erro de comunicação ao cancelar pedido.",
-                        "danger",
-                    );
-                }
+        async function openDetailsModal(orderId) {
+            const loader = document.getElementById("modal-loader");
+            const content = document.getElementById("modal-content-details");
+            loader.style.display = "block";
+            content.style.display = "none";
+            detailsModal.show();
+            try {
+                const response = await fetch(`/admin/order/details/${orderId}`);
+                if (!response.ok) throw new Error("Pedido não encontrado.");
+                const data = await response.json();
+                document.getElementById("modal-order-id").textContent = data.id;
+                document.getElementById("modal-customer-name").textContent =
+                    data.customer_name;
+                document.getElementById("modal-customer-phone").textContent =
+                    data.customer_phone;
+                document.getElementById("modal-customer-email").textContent =
+                    data.customer_email;
+                document.getElementById("modal-crown-name").textContent =
+                    data.crown_name;
+                document.getElementById("modal-total-amount").textContent =
+                    data.total_amount;
+                document.getElementById("modal-custom-message").textContent =
+                    data.custom_message;
+                document.getElementById("modal-deceased-name").textContent =
+                    data.deceased_name;
+                document.getElementById("modal-delivery-location").textContent =
+                    data.delivery_location;
+                document.getElementById("modal-chapel").textContent =
+                    data.chapel;
+                document.getElementById("modal-opening-time").textContent =
+                    data.opening_time;
+                document.getElementById("modal-order-date").textContent =
+                    data.order_date;
+                loader.style.display = "none";
+                content.style.display = "block";
+            } catch (error) {
+                loader.innerHTML = `<p class="text-danger">${error.message}</p>`;
             }
-        }
-
-        const detailsModal = document.getElementById("orderDetailsModal");
-        if (detailsModal) {
-            detailsModal.addEventListener(
-                "show.bs.modal",
-                async function (event) {
-                    const button = event.relatedTarget;
-                    const orderId = button.dataset.orderId;
-                    const loader = document.getElementById("modal-loader");
-                    const content = document.getElementById(
-                        "modal-content-details",
-                    );
-
-                    loader.style.display = "block";
-                    content.style.display = "none";
-
-                    try {
-                        const response = await fetch(
-                            `/admin/order/details/${orderId}`,
-                        );
-                        if (!response.ok)
-                            throw new Error("Pedido não encontrado.");
-                        const data = await response.json();
-
-                        document.getElementById("modal-order-id").textContent =
-                            data.id;
-                        document.getElementById(
-                            "modal-customer-name",
-                        ).textContent = data.customer_name;
-                        document.getElementById(
-                            "modal-customer-phone",
-                        ).textContent = data.customer_phone;
-                        document.getElementById(
-                            "modal-customer-email",
-                        ).textContent = data.customer_email;
-                        document.getElementById(
-                            "modal-crown-name",
-                        ).textContent = data.crown_name;
-                        document.getElementById(
-                            "modal-total-amount",
-                        ).textContent = data.total_amount;
-                        document.getElementById(
-                            "modal-custom-message",
-                        ).textContent = data.custom_message;
-                        document.getElementById(
-                            "modal-deceased-name",
-                        ).textContent = data.deceased_name;
-                        document.getElementById(
-                            "modal-delivery-location",
-                        ).textContent = data.delivery_location;
-                        document.getElementById("modal-chapel").textContent =
-                            data.chapel;
-                        document.getElementById(
-                            "modal-opening-time",
-                        ).textContent = data.opening_time;
-                        document.getElementById(
-                            "modal-order-date",
-                        ).textContent = data.order_date;
-
-                        loader.style.display = "none";
-                        content.style.display = "block";
-                    } catch (error) {
-                        loader.innerHTML = `<p class="text-danger">${error.message}</p>`;
-                    }
-                },
-            );
         }
 
         function updateColumnTitle(columnId, change) {
@@ -687,7 +613,7 @@ block content %}
                 const match = text.match(/\((\d+)\)/);
                 if (match) {
                     const currentCount = parseInt(match[1], 10);
-                    const newCount = currentCount + change;
+                    const newCount = Math.max(0, currentCount + change);
                     columnTitle.innerText = text.replace(
                         `(${currentCount})`,
                         `(${newCount})`,
@@ -708,78 +634,247 @@ block content %}
                     const distance = deadline - now;
                     const timerSpan = timerEl.querySelector("span");
                     if (!timerSpan) return;
-
                     if (distance < 0) {
                         timerSpan.textContent = "Atrasado";
                         timerEl.style.color = "var(--error-color)";
                         return;
                     }
-
                     const hours = Math.floor(distance / (1000 * 60 * 60));
                     const minutes = Math.floor(
                         (distance % (1000 * 60 * 60)) / (1000 * 60),
                     );
                     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                    timerSpan.textContent =
-                        (hours < 10 ? "0" : "") +
-                        hours +
-                        ":" +
-                        (minutes < 10 ? "0" : "") +
-                        minutes +
-                        ":" +
-                        (seconds < 10 ? "0" : "") +
-                        seconds;
-
-                    if (distance < 15 * 60 * 1000) {
-                        timerEl.style.color = "var(--warning-color)";
-                    } else {
-                        timerEl.style.color = "var(--success-color)";
-                    }
+                    timerSpan.textContent = [hours, minutes, seconds]
+                        .map((u) => (u < 10 ? "0" + u : u))
+                        .join(":");
+                    timerEl.style.color =
+                        distance < 15 * 60 * 1000
+                            ? "var(--warning-color)"
+                            : "var(--success-color)";
                 });
         }
 
         setInterval(updateTimers, 1000);
         updateTimers();
+
+        document.body.addEventListener(
+            "click",
+            function unlockAudio() {
+                if (audioUnlocked) return;
+                notificationSound.play().catch(() => {});
+                notificationSound.pause();
+                notificationSound.currentTime = 0;
+                audioUnlocked = true;
+            },
+            { once: true },
+        );
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [
+                ...container.querySelectorAll(".order-card:not(.dragging)"),
+            ];
+            return draggableElements.reduce(
+                (closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset, element: child };
+                    }
+                    return closest;
+                },
+                { offset: Number.NEGATIVE_INFINITY },
+            ).element;
+        }
+
+        function addOrderCardToBoard(order) {
+            const columnBody = document.querySelector("#pending .column-body");
+            if (!columnBody) return;
+            const card = document.createElement("div");
+            card.className = "order-card";
+            card.draggable = true;
+            card.dataset.orderId = order.id;
+            card.style.animation = "fadeInDown 0.5s ease";
+
+            card.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="card-customer">${order.customer_name}</div>
+                    <div class="card-product">${order.crown_name}</div>
+                </div>
+                <div class="dropdown"></div>
+            </div>
+            <div class="card-footer mt-3">
+                <small>${order.order_date_formatted}</small>
+                <div class="order-timer" data-order-date="${order.order_date_iso}"></div>
+            </div>
+        `;
+            columnBody.prepend(card);
+            updateCardContent(card, "pending");
+            updateColumnTitle("pending", 1);
+        }
+
+        // Sistema de atualizações em tempo real usando polling
+        let lastOrdersData = null;
+        let isPolling = false;
+        
+        function startRealTimeUpdates() {
+            if (isPolling) return;
+            isPolling = true;
+            
+            // Mostrar indicador de conexão
+            showConnectionStatus('✓ Atualizações em tempo real ativadas', 'success');
+            
+            // Polling a cada 5 segundos para atualizações de pedidos
+            setInterval(checkForOrderUpdates, 5000);
+            
+            // Primeira verificação imediata
+            checkForOrderUpdates();
+        }
+        
+        function checkForOrderUpdates() {
+            fetch('/api/orders-status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Verificar se há mudanças nos pedidos
+                        if (lastOrdersData && JSON.stringify(data.orders) !== JSON.stringify(lastOrdersData)) {
+                            updateOrdersBoard(data.orders);
+                            playNotificationSound();
+                            showNotification('📋 Pedidos atualizados!', 'info');
+                        }
+                        lastOrdersData = data.orders;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao verificar atualizações:', error);
+                    showNotification('❌ Erro de conexão', 'warning');
+                });
+        }
+        
+        function updateOrdersBoard(orders) {
+            // Separar pedidos por status
+            const pending = orders.filter(order => order.status === 'pending');
+            const inProgress = orders.filter(order => order.status === 'in_progress');
+            const delivered = orders.filter(order => order.status === 'delivered');
+            
+            // Atualizar contadores nas colunas
+            updateColumnCount('pending', pending.length);
+            updateColumnCount('in_progress', inProgress.length);
+            updateColumnCount('delivered', delivered.length);
+            
+            // Detectar novos pedidos ou mudanças de status
+            detectOrderChanges(orders);
+        }
+        
+        function updateColumnCount(status, count) {
+            const column = document.getElementById(status);
+            if (column) {
+                const title = column.querySelector('.column-title');
+                if (title) {
+                    const text = title.textContent;
+                    const newText = text.replace(/\(\d+\)/, `(${count})`);
+                    title.innerHTML = title.innerHTML.replace(text, newText);
+                }
+            }
+        }
+        
+        function detectOrderChanges(newOrders) {
+            if (!lastOrdersData) return;
+            
+            // Verificar pedidos que mudaram de status
+            newOrders.forEach(newOrder => {
+                const oldOrder = lastOrdersData.find(old => old.id === newOrder.id);
+                if (oldOrder && oldOrder.status !== newOrder.status) {
+                    showOrderStatusChange(newOrder.customer_name, oldOrder.status, newOrder.status);
+                }
+            });
+            
+            // Verificar novos pedidos
+            const newOrdersCount = newOrders.length - (lastOrdersData ? lastOrdersData.length : 0);
+            if (newOrdersCount > 0) {
+                showNotification(`🆕 ${newOrdersCount} novo(s) pedido(s)!`, 'success');
+            }
+        }
+        
+        function showOrderStatusChange(customerName, oldStatus, newStatus) {
+            const statusNames = {
+                'pending': 'Pendente',
+                'in_progress': 'Em Andamento', 
+                'delivered': 'Entregue'
+            };
+            
+            showNotification(
+                `📋 ${customerName}: ${statusNames[oldStatus]} → ${statusNames[newStatus]}`, 
+                'info'
+            );
+        }
+        
+        function playNotificationSound() {
+            const sound = document.getElementById('notification-sound');
+            if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log('Som não pôde ser reproduzido:', e));
+            }
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Remover notificações anteriores
+            const existingNotifications = document.querySelectorAll('.realtime-notification');
+            existingNotifications.forEach(n => n.remove());
+            
+            // Criar nova notificação
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} realtime-notification position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 320px; opacity: 0; transition: opacity 0.3s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.2);';
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-triangle'}"></i>
+                    </div>
+                    <div class="flex-grow-1">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Mostrar com animação
+            setTimeout(() => notification.style.opacity = '1', 100);
+            
+            // Auto-remover após 4 segundos
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+        
+        function showConnectionStatus(message, type) {
+            const statusEl = document.createElement('div');
+            statusEl.className = `badge bg-${type} position-fixed`;
+            statusEl.style.cssText = 'top: 10px; left: 50%; transform: translateX(-50%); z-index: 9999; padding: 8px 16px;';
+            statusEl.innerHTML = `<i class="fas fa-wifi me-2"></i>${message}`;
+            
+            document.body.appendChild(statusEl);
+            
+            setTimeout(() => {
+                statusEl.style.opacity = '0';
+                setTimeout(() => statusEl.remove(), 300);
+            }, 3000);
+        }
+        
+        // Iniciar sistema de atualizações em tempo real
+        startRealTimeUpdates();
+        
+        // Pausa/resume baseado na visibilidade da página
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                isPolling = false;
+            } else {
+                setTimeout(() => {
+                    isPolling = false;
+                    startRealTimeUpdates();
+                }, 1000);
+            }
+        });
     });
 </script>
-
-<style>
-    .btn-icon {
-        background: transparent;
-        border: none;
-        color: var(--text-muted);
-        padding: 0.25rem 0.5rem;
-    }
-    .btn-icon:hover {
-        color: var(--text-primary);
-    }
-    .order-card .card-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 0.75rem;
-        border-top: 1px solid var(--border-color);
-        font-size: 0.8rem;
-        color: var(--text-muted);
-    }
-    .order-timer {
-        font-weight: 600;
-        color: var(--success-color);
-    }
-    .order-timer.final-status {
-        color: var(--text-muted);
-    }
-    /* Animação para o novo card */
-    @keyframes fadeInDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
 {% endblock %}
