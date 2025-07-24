@@ -54,9 +54,8 @@ Montserrat{% endblock %} {% block content %}
                             class="btn btn-sm btn-outline-success"
                             href="#"
                             title="Exportar para Excel"
-                        >
-                            <i class="fas fa-file-excel"></i>
-                        </a>
+                            ><i class="fas fa-file-excel"></i
+                        ></a>
                     </div>
                 </form>
             </div>
@@ -66,12 +65,14 @@ Montserrat{% endblock %} {% block content %}
                 class="stat-card h-100 d-flex flex-column justify-content-center py-3"
             >
                 <i class="fas fa-dollar-sign"></i>
-                <h3 class="mb-1">R$ {{ "%.2f"|format(total_revenue or 0) }}</h3>
+                <h3 class="mb-1" id="total-revenue-display">
+                    R$ {{ "%.2f"|format(total_revenue or 0) }}
+                </h3>
                 <p class="mb-0">
-                    <small>
-                        {% if start_date or end_date %} Faturamento do Período
-                        {% else %} Faturamento Total {% endif %}
-                    </small>
+                    <small
+                        >{% if start_date or end_date %} Faturamento do Período
+                        {% else %} Faturamento Total {% endif %}</small
+                    >
                 </p>
             </div>
         </div>
@@ -93,11 +94,9 @@ Montserrat{% endblock %} {% block content %}
                 </thead>
                 <tbody>
                     {% for order in orders %}
-                    <tr>
+                    <tr id="order-row-{{ order.id }}">
                         <td><strong>#{{ order.id }}</strong></td>
-                        <td>
-                            {{ order.order_date|localtime }}</td>
-                        </td>
+                        <td>{{ order.order_date|localtime }}</td>
                         <td>{{ order.customer_name }}</td>
                         <td>{{ order.crown_name }}</td>
                         <td>
@@ -113,7 +112,7 @@ Montserrat{% endblock %} {% block content %}
                                 order.status.title()) }}
                             </span>
                         </td>
-                        <td class="text-end fw-bold">
+                        <td class="text-end fw-bold order-total-cell">
                             R$ {{ "%.2f"|format(order.total_amount) }}
                         </td>
                         <td class="text-center">
@@ -125,6 +124,15 @@ Montserrat{% endblock %} {% block content %}
                                 title="Ver Detalhes"
                             >
                                 <i class="fas fa-receipt"></i>
+                            </button>
+                            <button
+                                class="btn btn-sm btn-icon text-danger"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteConfirmationModal"
+                                data-order-id="{{ order.id }}"
+                                title="Apagar Pedido"
+                            >
+                                <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
                     </tr>
@@ -257,6 +265,62 @@ Montserrat{% endblock %} {% block content %}
         </div>
     </div>
 </div>
+
+<div
+    class="modal fade"
+    id="deleteConfirmationModal"
+    tabindex="-1"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Tem a certeza de que deseja apagar permanentemente o pedido
+                    <strong id="delete-order-id-text"></strong>? Esta ação não
+                    pode ser desfeita.
+                </p>
+                <div class="mb-3">
+                    <label for="delete-password" class="form-label"
+                        >Digite a sua senha de exclusão para confirmar:</label
+                    >
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="delete-password"
+                        required
+                    />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    Cancelar
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    id="confirm-delete-btn"
+                >
+                    Apagar Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %} {% block scripts %} {{ super() }}
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -264,15 +328,12 @@ Montserrat{% endblock %} {% block content %}
         const exportBtn = document.getElementById('exportBtn');
         const startDateInput = document.getElementById('start_date');
         const endDateInput = document.getElementById('end_date');
-
         function updateExportState() {
             const hasFilter = startDateInput.value || endDateInput.value;
             const hasOrders = {{ 'true' if orders else 'false' }};
-
             if (hasFilter && hasOrders) {
                 exportBtn.classList.remove('disabled');
                 exportBtn.setAttribute('aria-disabled', 'false');
-
                 const params = new URLSearchParams();
                 if (startDateInput.value) params.append('start_date', startDateInput.value);
                 if (endDateInput.value) params.append('end_date', endDateInput.value);
@@ -283,7 +344,6 @@ Montserrat{% endblock %} {% block content %}
                 exportBtn.href = "#";
             }
         }
-
         startDateInput.addEventListener('change', updateExportState);
         endDateInput.addEventListener('change', updateExportState);
         updateExportState();
@@ -296,15 +356,12 @@ Montserrat{% endblock %} {% block content %}
                 const orderId = button.dataset.orderId;
                 const loader = document.getElementById("modal-loader");
                 const content = document.getElementById("modal-content-details");
-
                 loader.style.display = "block";
                 content.style.display = "none";
-
                 try {
                     const response = await fetch(`/admin/order/details/${orderId}`);
                     if (!response.ok) throw new Error("Pedido não encontrado.");
                     const data = await response.json();
-
                     document.getElementById("modal-order-id").textContent = data.id;
                     document.getElementById("modal-customer-name").textContent = data.customer_name;
                     document.getElementById("modal-customer-phone").textContent = data.customer_phone;
@@ -317,7 +374,6 @@ Montserrat{% endblock %} {% block content %}
                     document.getElementById("modal-chapel").textContent = data.chapel;
                     document.getElementById("modal-opening-time").textContent = data.opening_time;
                     document.getElementById("modal-order-date").textContent = data.order_date;
-
                     loader.style.display = "none";
                     content.style.display = "block";
                 } catch (error) {
@@ -325,6 +381,66 @@ Montserrat{% endblock %} {% block content %}
                 }
             });
         }
+
+        // --- NOVA LÓGICA PARA O MODAL DE EXCLUSÃO E ATUALIZAÇÃO DO FATURAMENTO ---
+        const deleteModal = document.getElementById('deleteConfirmationModal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const deletePasswordInput = document.getElementById('delete-password');
+        let orderIdToDelete = null;
+
+        deleteModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            orderIdToDelete = button.dataset.orderId;
+            document.getElementById('delete-order-id-text').textContent = `#${orderIdToDelete}`;
+            deletePasswordInput.value = '';
+        });
+
+        confirmDeleteBtn.addEventListener('click', async function() {
+            const password = deletePasswordInput.value;
+            if (!password) {
+                showToast('Por favor, digite a senha.', 'warning');
+                return;
+            }
+
+            this.disabled = true;
+
+            try {
+                const response = await fetch('/admin/order/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        order_id: orderIdToDelete,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    const row = document.getElementById(`order-row-${orderIdToDelete}`);
+                    if (row) {
+                        const totalCell = row.querySelector('.order-total-cell');
+                        const revenueDisplay = document.getElementById('total-revenue-display');
+                        const orderValue = parseFloat(totalCell.textContent.replace('R$', '').replace(',', '.'));
+                        const currentRevenue = parseFloat(revenueDisplay.textContent.replace('R$', '').replace(',', '.'));
+                        const newRevenue = currentRevenue - orderValue;
+                        revenueDisplay.textContent = `R$ ${newRevenue.toFixed(2).replace('.', ',')}`;
+
+                        row.style.transition = 'opacity 0.5s ease';
+                        row.style.opacity = '0';
+                        setTimeout(() => row.remove(), 500);
+                    }
+                    showToast(data.message, 'success');
+                    bootstrap.Modal.getInstance(deleteModal).hide();
+                } else {
+                    showToast(data.message || 'Ocorreu um erro.', 'danger');
+                }
+            } catch (error) {
+                showToast('Erro de comunicação com o servidor.', 'danger');
+            } finally {
+                this.disabled = false;
+            }
+        });
     });
 </script>
 <style>
@@ -336,6 +452,9 @@ Montserrat{% endblock %} {% block content %}
     }
     .btn-icon:hover {
         color: var(--text-primary);
+    }
+    .btn-icon.text-danger:hover {
+        color: #ef4444;
     }
 </style>
 {% endblock %}

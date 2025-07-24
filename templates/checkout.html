@@ -148,24 +148,26 @@ Montserrat{% endblock %} {% block content %}
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="chapel" class="form-label">Capela</label>
+                    <label for="chapel" class="form-label">Capela *</label>
                     <input
                         type="text"
                         class="form-control"
                         id="chapel"
                         name="chapel"
                         placeholder="Ex: Capela 3"
+                        required
                     />
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="openingTime" class="form-label"
-                        >Horário de Abertura</label
+                        >Horário de Abertura *</label
                     >
                     <input
                         type="time"
                         class="form-control"
                         id="openingTime"
                         name="opening_time"
+                        required
                     />
                 </div>
             </div>
@@ -270,7 +272,7 @@ Montserrat{% endblock %} {% block content %}
                         juros)
                     </option>
 
-                    {% for i in range(2, 13) %} {% set total_com_juros =
+                    {% for i in range(2, 5) %} {% set total_com_juros =
                     cart.crown_price * (1 + 0.015 * (i - 1)) %} {% set
                     valor_parcela = total_com_juros / i %}
                     <option value="{{ i }}">

@@ -18,15 +18,46 @@ from io import BytesIO
 
 
 # --- DECORADOR DE LOGIN ---
-# A função foi movida para aqui.
 def login_required(f):
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session: return redirect(url_for('login'))
+        if 'logged_in' not in session:
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+# --- FUNÇÃO AUXILIAR PARA ATUALIZAR ESTATÍSTICAS ---
+def emit_updated_statistics():
+    """Busca os dados mais recentes e emite para os clientes via WebSocket."""
+    # O app_context é necessário para aceder à base de dados fora de uma rota normal
+    with app.app_context():
+        try:
+            now_utc = datetime.utcnow()
+            now_brt = now_utc - timedelta(hours=3)
+            start_of_day_brt = datetime.combine(now_brt.date(),
+                                                datetime.min.time())
+            start_of_day_utc = start_of_day_brt + timedelta(hours=3)
+
+            # Otimização: Faz as contagens diretamente na base de dados
+            total_orders = db.session.query(Order).count()
+            today_orders = db.session.query(Order).filter(
+                Order.order_date >= start_of_day_utc).count()
+            completed_orders = db.session.query(Order).filter_by(
+                status='delivered').count()
+
+            statistics = {
+                'total_orders': total_orders,
+                'today_orders': today_orders,
+                'completed_orders': completed_orders,
+                'timestamp': now_utc.isoformat() + "Z"
+            }
+            socketio.emit('statistics_updated', statistics)
+            print(f"Estatísticas atualizadas emitidas: {statistics}")
+        except Exception as e:
+            print(f'Erro ao emitir estatísticas: {e}')
 
 
 # Configurações
@@ -129,9 +160,6 @@ def create_checkout_session():
         return redirect(url_for('checkout'))
 
 
-# Em routes.py
-
-
 @app.route('/payment-success')
 def payment_success():
     session_id = request.args.get('session_id')
@@ -184,14 +212,15 @@ def payment_success():
                 "order_date_iso":
                 order.order_date.isoformat() + "Z"
             }
-            # Emite um evento 'order_created' para todos os clientes conectados
-            socketio.emit('order_created', order_data)
+
+            # ATUALIZAÇÃO: Emitimos o evento com o nome correto
+            socketio.emit('new_order_notification', order_data)
+
+            # ATUALIZAÇÃO: Chamamos a função para atualizar as estatísticas
+            emit_updated_statistics()
 
             session['last_order_id'] = order.id
 
-            # --- CORREÇÃO APLICADA AQUI ---
-            # Enviamos o objeto "order" completo diretamente para a página.
-            # O dicionário "order_details_for_template" foi removido.
             return render_template('success.html', order=order)
 
         else:
@@ -205,18 +234,12 @@ def payment_success():
         return redirect(url_for('checkout'))
 
 
-# Rota protegida com o decorador
 @app.route('/download-receipt/<int:order_id>')
 def download_receipt(order_id):
-    # --- NOVA LÓGICA DE SEGURANÇA ---
-    # Permite o acesso se:
-    # 1. O utilizador for um administrador logado.
-    # 2. OU se o ID do pedido corresponder ao último pedido feito nesta sessão de navegador.
     if 'logged_in' not in session and session.get('last_order_id') != order_id:
         flash('Acesso não autorizado para baixar este recibo.', 'error')
         return redirect(url_for('index'))
 
-    # Se a verificação passar, o resto do código é executado normalmente.
     try:
         order = Order.query.get_or_404(order_id)
         filepath = generate_receipt(order)
@@ -231,7 +254,6 @@ def download_receipt(order_id):
 
 
 # --- ROTAS DE ADMIN ---
-# A definição do decorador foi movida para o topo
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -247,10 +269,6 @@ def login():
     return render_template('login.html')
 
 
-# (restante do seu código continua aqui...)
-# ...
-
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -263,6 +281,8 @@ def logout():
 @login_required
 def admin():
     crowns = FlowerCrown.query.order_by(FlowerCrown.position).all()
+    # ATUALIZAÇÃO: Chamamos a função para garantir que as estatísticas estão atualizadas ao carregar a página
+    emit_updated_statistics()
     return render_template('admin.html', crowns=crowns)
 
 
@@ -373,19 +393,6 @@ def move_crown(crown_id, direction):
 @app.route('/admin/orders')
 @login_required
 def order_management():
-    """
-    Função atualizada para exibir:
-    - Todos os pedidos pendentes e em andamento (independentemente da data).
-    - Apenas os pedidos entregues no dia de hoje.
-    """
-    # 1. Busca todos os pedidos que ainda precisam de atenção (pendentes e em andamento).
-    #    Estes não têm filtro de data.
-    orders_pending = Order.query.filter_by(status='pending').order_by(
-        Order.order_date.asc()).all()
-    orders_in_progress = Order.query.filter_by(status='in_progress').order_by(
-        Order.order_date.asc()).all()
-
-    # 2. Lógica de fuso horário para buscar apenas os pedidos entregues HOJE.
     now_utc = datetime.utcnow()
     now_brt = now_utc - timedelta(hours=3)
     start_of_day_brt = datetime.combine(now_brt.date(), datetime.min.time())
@@ -393,49 +400,19 @@ def order_management():
     start_of_day_utc = start_of_day_brt + timedelta(hours=3)
     end_of_day_utc = end_of_day_brt + timedelta(hours=3)
 
-    # 3. Busca os pedidos com status 'delivered' APENAS dentro do intervalo de hoje.
+    orders_pending = Order.query.filter_by(status='pending').order_by(
+        Order.order_date.asc()).all()
+    orders_in_progress = Order.query.filter_by(status='in_progress').order_by(
+        Order.order_date.asc()).all()
     orders_delivered = Order.query.filter(
         Order.status == 'delivered', Order.order_date >= start_of_day_utc,
         Order.order_date
         <= end_of_day_utc).order_by(Order.order_date.desc()).all()
 
-    # 4. Envia as listas de pedidos para o template renderizar.
     return render_template('orders.html',
                            pending=orders_pending,
                            in_progress=orders_in_progress,
                            delivered=orders_delivered)
-
-
-@app.route('/api/orders-status')
-@login_required
-def orders_status_api():
-    """API endpoint para obter dados dos pedidos em tempo real"""
-    try:
-        orders = Order.query.order_by(Order.order_date.desc()).all()
-        
-        orders_data = []
-        for order in orders:
-            orders_data.append({
-                'id': order.id,
-                'customer_name': order.customer_name,
-                'crown_name': order.crown_name,
-                'total_amount': float(order.total_amount),
-                'status': order.status,
-                'order_date': order.order_date.isoformat() if order.order_date else None,
-                'payment_method': order.payment_method
-            })
-        
-        return jsonify({
-            'success': True,
-            'orders': orders_data,
-            'total_count': len(orders_data),
-            'timestamp': datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
 
 
 @app.route('/admin/reports')
@@ -443,7 +420,6 @@ def orders_status_api():
 def reports():
     start_date_str = request.args.get('start_date')
     end_date_str = request.args.get('end_date')
-
     query = Order.query
 
     if start_date_str:
@@ -468,9 +444,7 @@ def reports():
 @app.route('/admin/order/details/<int:order_id>')
 @login_required
 def get_order_details(order_id):
-    """Fornece os detalhes de um pedido em formato JSON para o modal."""
     order = Order.query.get_or_404(order_id)
-
     order_details = {
         "id":
         f"#{order.id}",
@@ -505,42 +479,31 @@ def get_order_details(order_id):
 @app.route('/admin/export-report')
 @login_required
 def export_report():
-    """Gera e exporta um relatório de pedidos em formato .xlsx."""
     start_date_str = request.args.get('start_date')
     end_date_str = request.args.get('end_date')
-
     query = Order.query
 
     if start_date_str:
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
         query = query.filter(Order.order_date >= start_date)
-
     if end_date_str:
         end_date = datetime.strptime(end_date_str,
                                      '%Y-%m-%d') + timedelta(days=1)
         query = query.filter(Order.order_date < end_date)
 
     orders = query.order_by(Order.order_date.desc()).all()
-
-    # Cria o livro de trabalho e a folha do Excel
     wb = Workbook()
     ws = wb.active
     ws.title = "Relatorio de Pedidos"
-
-    # Define os cabeçalhos
     headers = [
         "ID do Pedido", "Data", "Cliente", "Email", "Telefone", "Produto",
         "Valor", "Status", "Homenageado", "Local Entrega"
     ]
     ws.append(headers)
-
-    # Aplica estilo aos cabeçalhos
     bold_font = Font(bold=True)
     for cell in ws[1]:
         cell.font = bold_font
         cell.alignment = Alignment(horizontal="center")
-
-    # Adiciona os dados dos pedidos
     for order in orders:
         local_date = (order.order_date -
                       timedelta(hours=3)).strftime('%d/%m/%Y %H:%M')
@@ -549,8 +512,6 @@ def export_report():
             order.customer_phone, order.crown_name, order.total_amount,
             order.status, order.deceased_name, order.delivery_location
         ])
-
-    # Ajusta a largura das colunas
     for col in ws.columns:
         max_length = 0
         column = col[0].column_letter
@@ -562,17 +523,12 @@ def export_report():
                 pass
         adjusted_width = (max_length + 2)
         ws.column_dimensions[column].width = adjusted_width
-
-    # Prepara o ficheiro para download
     virtual_workbook = BytesIO()
     wb.save(virtual_workbook)
     virtual_workbook.seek(0)
-
-    # Define o nome do ficheiro dinamicamente
     filename = "relatorio_pedidos.xlsx"
     if start_date_str and end_date_str:
         filename = f"relatorio_{start_date_str}_a_{end_date_str}.xlsx"
-
     return Response(
         virtual_workbook,
         mimetype=
@@ -580,148 +536,129 @@ def export_report():
         headers={'Content-Disposition': f'attachment;filename={filename}'})
 
 
-# ============ EVENTOS SOCKETIO PARA TEMPO REAL ============
+@app.route('/admin/order/delete', methods=['POST'])
+@login_required
+def delete_order_from_report():
+    """Apaga um pedido da base de dados após confirmação com senha."""
+    data = request.get_json()
+    order_id = data.get('order_id')
+    password = data.get('password')
 
+    # Busca a senha segura guardada nos Secrets
+    delete_password = os.environ.get('DELETE_PASSWORD', '1234')
+
+    if not password or password != delete_password:
+        return jsonify({'success': False, 'message': 'Senha incorreta.'}), 403
+
+    order = Order.query.get(order_id)
+    if order:
+        try:
+            db.session.delete(order)
+            db.session.commit()
+            # Opcional: Notificar outros admins em tempo real que o pedido foi apagado
+            socketio.emit('order_deleted', {
+                'order_id': order_id,
+                'customer_name': order.customer_name
+            })
+            return jsonify({
+                'success':
+                True,
+                'message':
+                f'Pedido #{order_id} apagado com sucesso.'
+            })
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({
+                'success': False,
+                'message': f'Erro ao apagar o pedido: {str(e)}'
+            }), 500
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'Pedido não encontrado.'
+        }), 404
+
+
+# ============ EVENTOS SOCKETIO PARA TEMPO REAL ============
 @socketio.on('connect')
 def handle_connect():
-    """Evento executado quando um cliente se conecta"""
     print(f'Cliente conectado: {request.sid}')
-    emit('connected', {'message': 'Conectado com sucesso ao servidor'})
 
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    """Evento executado quando um cliente se desconecta"""
     print(f'Cliente desconectado: {request.sid}')
 
 
 @socketio.on('join_admin')
 def handle_join_admin():
-    """Permite que admins se juntem a um room específico"""
     print(f'Admin conectado: {request.sid}')
-    emit('admin_joined', {'message': 'Admin conectado ao sistema de tempo real'})
 
 
 @socketio.on('update_order_status')
 def handle_update_order_status(data):
-    """Processa atualização de status de pedido via WebSocket"""
     try:
         order_id = data.get('order_id')
         new_status = data.get('new_status')
-        
-        if not order_id or not new_status:
-            emit('error', {'message': 'Dados inválidos'})
-            return
-        
-        # Buscar e atualizar o pedido
+        if not order_id or not new_status: return
+
         order = Order.query.get(order_id)
-        if not order:
-            emit('error', {'message': 'Pedido não encontrado'})
+        if not order or new_status not in [
+                'pending', 'in_progress', 'delivered'
+        ]:
             return
-        
-        if new_status not in ['pending', 'in_progress', 'delivered']:
-            emit('error', {'message': 'Status inválido'})
-            return
-        
+
         old_status = order.status
         order.status = new_status
         db.session.commit()
-        
-        # Emitir atualização para todos os clientes conectados
-        socketio.emit('order_status_updated', {
-            'order_id': order_id,
-            'old_status': old_status,
-            'new_status': new_status,
-            'customer_name': order.customer_name,
-            'timestamp': datetime.now().isoformat()
-        }, broadcast=True)
-        
-        print(f'Status do pedido {order_id} atualizado: {old_status} -> {new_status}')
-        
+
+        socketio.emit(
+            'order_status_updated', {
+                'order_id': order_id,
+                'old_status': old_status,
+                'new_status': new_status,
+                'customer_name': order.customer_name,
+                'timestamp': datetime.now().isoformat() + "Z"
+            })
+
+        # ATUALIZAÇÃO: Chamamos a função para atualizar as estatísticas
+        emit_updated_statistics()
+        print(
+            f'Status do pedido {order_id} atualizado: {old_status} -> {new_status}'
+        )
+
     except Exception as e:
         db.session.rollback()
         print(f'Erro ao atualizar status do pedido: {e}')
-        emit('error', {'message': f'Erro interno: {str(e)}'})
 
 
 @socketio.on('delete_order')
 def handle_delete_order(data):
-    """Processa exclusão de pedido via WebSocket"""
     try:
         order_id = data.get('order_id')
-        
-        if not order_id:
-            emit('error', {'message': 'ID do pedido é obrigatório'})
-            return
-        
+        if not order_id: return
+
         order = Order.query.get(order_id)
-        if not order:
-            emit('error', {'message': 'Pedido não encontrado'})
-            return
-        
+        if not order: return
+
         customer_name = order.customer_name
         db.session.delete(order)
         db.session.commit()
-        
-        # Emitir exclusão para todos os clientes conectados
-        socketio.emit('order_deleted', {
-            'order_id': order_id,
-            'customer_name': customer_name,
-            'timestamp': datetime.now().isoformat()
-        }, broadcast=True)
-        
+
+        socketio.emit(
+            'order_deleted', {
+                'order_id': order_id,
+                'customer_name': customer_name,
+                'timestamp': datetime.now().isoformat() + "Z"
+            })
+
+        # ATUALIZAÇÃO: Chamamos a função para atualizar as estatísticas
+        emit_updated_statistics()
         print(f'Pedido {order_id} ({customer_name}) foi excluído')
-        
+
     except Exception as e:
         db.session.rollback()
         print(f'Erro ao excluir pedido: {e}')
-        emit('error', {'message': f'Erro interno: {str(e)}'})
 
 
-@socketio.on('new_order_created')
-def handle_new_order(data):
-    """Notifica sobre novo pedido criado"""
-    try:
-        order_id = data.get('order_id')
-        
-        if order_id:
-            order = Order.query.get(order_id)
-            if order:
-                # Emitir novo pedido para todos os clientes conectados
-                socketio.emit('new_order_notification', {
-                    'order_id': order.id,
-                    'customer_name': order.customer_name,
-                    'crown_name': order.crown_name,
-                    'total_amount': float(order.total_amount),
-                    'timestamp': datetime.now().isoformat()
-                }, broadcast=True)
-                
-                print(f'Novo pedido criado: {order_id} - {order.customer_name}')
-        
-    except Exception as e:
-        print(f'Erro ao processar novo pedido: {e}')
-
-
-# Função auxiliar para emitir estatísticas atualizadas
-def emit_updated_statistics():
-    """Emite estatísticas atualizadas para todos os clientes"""
-    try:
-        orders = Order.query.all()
-        today = datetime.now().date()
-        
-        today_orders = [o for o in orders if o.order_date and o.order_date.date() == today]
-        completed_orders = [o for o in orders if o.status == 'delivered']
-        
-        statistics = {
-            'total_orders': len(orders),
-            'today_orders': len(today_orders),
-            'completed_orders': len(completed_orders),
-            'pending_orders': len([o for o in orders if o.status == 'pending']),
-            'in_progress_orders': len([o for o in orders if o.status == 'in_progress']),
-            'timestamp': datetime.now().isoformat()
-        }
-        
-        socketio.emit('statistics_updated', statistics, broadcast=True)
-        
-    except Exception as e:
-        print(f'Erro ao emitir estatísticas: {e}')
+# ATUALIZAÇÃO: Função 'handle_new_order' foi REMOVIDA
