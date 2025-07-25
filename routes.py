@@ -15,6 +15,7 @@ from flask import Response
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
 from io import BytesIO
+from utils.email_sender import send_receipt_email
 
 
 # --- DECORADOR DE LOGIN ---
@@ -198,6 +199,14 @@ def payment_success():
             db.session.add(order)
             db.session.commit()
 
+            try:
+                filepath = generate_receipt(order)
+                send_receipt_email(order, filepath)
+            except Exception as e:
+                print(
+                    f"ERRO CRÍTICO: Não foi possível gerar o recibo ou enviar o e-mail. Erro: {e}"
+                )
+
             # Prepara os dados do novo pedido para enviar em tempo real
             order_data = {
                 "id":
@@ -254,13 +263,18 @@ def download_receipt(order_id):
 
 
 # --- ROTAS DE ADMIN ---
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        if request.form.get('username') == os.environ.get(
-                'ADMIN_USER',
-                'admin') and request.form.get('password') == os.environ.get(
-                    'ADMIN_PASSWORD', '1234'):
+        # Lê o utilizador e a senha dos Secrets
+        admin_user = os.environ.get('ADMIN_USER')
+        admin_password = os.environ.get('ADMIN_PASSWORD')
+
+        # Compara com os dados enviados pelo formulário
+        if request.form.get('username') == admin_user and request.form.get(
+                'password') == admin_password:
             session['logged_in'] = True
             flash('Login realizado com sucesso!', 'success')
             return redirect(url_for('admin'))

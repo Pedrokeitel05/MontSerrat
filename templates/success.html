@@ -7,54 +7,40 @@ Montserrat{% endblock %} {% block content %}
 
     <h1>Pedido Confirmado!</h1>
     <p class="lead">
-        Obrigado, {{ order.customer_name }}! Seu pedido foi processado com
+        Obrigado, {{ order.customer_name }}! O seu pedido foi processado com
         sucesso.
     </p>
 
-    <div class="order-details">
-        <div class="row">
-            <div class="col-md-6">
-                <h6>Número do Pedido</h6>
-                <p class="fw-bold">#{{ order.id }}</p>
+    <div class="alert alert-info d-flex align-items-center mt-4" role="alert">
+        <i class="fas fa-envelope-open-text me-3 fs-4"></i>
+        <div>
+            Enviamos o comprovativo do seu pedido para o seu e-mail. Por favor,
+            verifique também a sua caixa de spam.
+        </div>
+    </div>
+
+    <div class="order-details mt-4">
+        <div class="row mb-4">
+            <div class="col-6">
+                <h6 class="text-muted">Número do Pedido</h6>
+                <p class="fw-bold fs-5 mb-0">#{{ order.id }}</p>
             </div>
-            <div class="col-md-6">
-                <h6>Status</h6>
-                <p class="fw-bold">
+            <div class="col-6 text-end">
+                <h6 class="text-muted">Status</h6>
+                <p class="fw-bold fs-5 mb-0 text-success">
                     <i class="fas fa-check me-2"></i>Confirmado
                 </p>
             </div>
         </div>
-
-        <div
-            class="mt-4 p-3"
-            style="
-                background: rgba(16, 185, 129, 0.1);
-                border-radius: 12px;
-                border-left: 4px solid var(--success-color);
-            "
-        >
-            <i class="fas fa-info-circle me-2"></i>
-            <strong>Próximos passos:</strong>
-            Entraremos em contato para confirmar os detalhes da entrega e
-            coordenar os arranjos necessários.
-        </div>
     </div>
 
-    <div class="action-buttons d-flex justify-content-center gap-2 flex-wrap">
+    <div
+        class="action-buttons d-flex justify-content-center gap-2 flex-wrap mt-4"
+    >
+        {% set whatsapp_message = "Olá, me chamo " ~ order.customer_name ~ "!
+        Gostaria de acompanhar o andamento do pedido #" ~ order.id ~ "." %}
         <a
-            href="{{ url_for('download_receipt', order_id=order.id) }}"
-            class="btn btn-gradient"
-        >
-            <i class="fas fa-download me-2"></i>
-            Baixar Comprovativo
-        </a>
-
-        {# 1. Criamos a variável com a mensagem personalizada #} {% set
-        whatsapp_message = "Olá, me chamo " ~ order.customer_name ~ "! Gostaria
-        de acompanhar o andamento do pedido #" ~ order.id ~ "." %} {# 2.
-        Construímos o link com a mensagem codificada para URL #}
-        <a
-            href="https://api.whatsapp.com/send?phone=5551983339080&text={{ whatsapp_message|urlencode }}"
+            href="https://api.whatsapp.com/send?phone=5551994249799&text={{ whatsapp_message|urlencode }}"
             class="btn"
             style="background-color: #25d366; color: white"
             target="_blank"
@@ -63,28 +49,6 @@ Montserrat{% endblock %} {% block content %}
             Acompanhar Pedido
         </a>
     </div>
-    <div class="order-details mt-4">
-        <h6>
-            <i class="fas fa-receipt me-2"></i>
-            Comprovante de Pagamento
-        </h6>
-        <p>
-            Seu comprovante foi gerado automaticamente. Para futuras
-            referências, guarde o número do pedido:
-            <strong>#{{ order.id }}</strong>
-        </p>
-
-        <div class="row">
-            <div class="col-sm-6">
-                <small>Data do Pedido:</small>
-                <p class="mb-2">{{ order.order_date|localtime }}</p>
-            </div>
-            <div class="col-sm-6">
-                <small>Método de Pagamento:</small>
-                <p class="mb-2">Processado com sucesso</p>
-            </div>
-        </div>
-    </div>
 </div>
-{% endblock %} {% block scripts %} {# O script de redirecionamento automático
-foi removido daqui #} {% endblock %}
+{% endblock %} {% block scripts %} {# Nenhum script necessário para esta página
+#} {% endblock %}

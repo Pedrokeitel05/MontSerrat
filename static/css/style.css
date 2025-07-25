@@ -3011,3 +3011,37 @@ body {
 #customizeModal .text-muted {
     color: var(--text-secondary) !important;
 }
+
+/* ================================================================= */
+/* AJUSTES PARA CARTÕES DE PRODUTO MAIORES                           */
+/* ================================================================= */
+
+/* 1. Aumenta a altura do container da imagem */
+.crown-card .card-img-container {
+    height: 350px;
+    /* Altura significativamente maior para a foto */
+}
+
+/* 2. Garante que a descrição seja sempre visível */
+.crown-card .card-text {
+    display: block !important;
+    /* !important para sobrepor a regra que a escondia */
+    font-size: 0.9rem;
+    min-height: 60px;
+    /* Garante um espaço mínimo para a descrição */
+}
+
+/* 3. Ajustes de responsividade para ecrãs menores */
+@media (max-width: 768px) {
+    .crown-card .card-img-container {
+        height: 280px;
+        /* Um pouco menor em ecrãs de tablet */
+    }
+}
+
+@media (max-width: 576px) {
+    .crown-card .card-img-container {
+        height: 220px;
+        /* Ainda menor para telemóveis */
+    }
+}

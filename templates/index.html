@@ -33,7 +33,7 @@ Serrat{% endblock %} {% block content %}
 
     <div class="row">
         {% for crown in crowns %}
-        <div class="col-6 col-lg-4 col-md-6 mb-4">
+        <div class="col-12 col-md-6 mb-4">
             <div class="card crown-card h-100 fade-in-up">
                 <div class="card-img-container">
                     <img
@@ -50,6 +50,8 @@ Serrat{% endblock %} {% block content %}
                     <p class="card-text">{{ crown.description }}</p>
                     <button
                         class="btn btn-customize"
+                        data-bs-toggle="modal"
+                        data-bs-target="#customizeModal"
                         data-crown-id="{{ crown.id }}"
                         data-crown-name="{{ crown.name }}"
                         data-crown-price="{{ crown.price }}"
